@@ -29,13 +29,7 @@ export const isBillingConfigured = Boolean(
 );
 
 export type PaymentMethod =
-  | "apple_pay"
-  | "google_pay"
-  | "link"
-  | "card"
-  | "bancontact"
-  | "ideal"
-  | "sepa_debit";
+  "apple_pay" | "google_pay" | "link" | "card" | "bancontact" | "ideal" | "sepa_debit";
 
 export type BillingAddress = {
   fullName: string;

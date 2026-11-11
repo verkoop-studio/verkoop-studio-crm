@@ -295,7 +295,7 @@ function ProspectFlow() {
                             style={{
                               color:
                                 lead.value_estimate == null
-                                  ? "var(--vsp-disabled)"
+                                  ? "var(--vsp-caption)"
                                   : "var(--vsp-ink)",
                               fontWeight: lead.value_estimate == null ? 400 : 600,
                             }}

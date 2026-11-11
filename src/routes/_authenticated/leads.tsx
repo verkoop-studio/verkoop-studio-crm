@@ -534,7 +534,7 @@ function LeadsPage() {
                   <span
                     className="text-[13px] vsp-nums"
                     style={{
-                      color: lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                      color: lead.value_estimate == null ? "var(--vsp-caption)" : "var(--vsp-ink)",
                       fontWeight: lead.value_estimate == null ? 400 : 600,
                     }}
                   >
@@ -671,7 +671,7 @@ function LeadsPage() {
                         className="text-[13px]"
                         style={{
                           color:
-                            lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                            lead.value_estimate == null ? "var(--vsp-caption)" : "var(--vsp-ink)",
                           fontWeight: lead.value_estimate == null ? 400 : 600,
                         }}
                       >

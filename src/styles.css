@@ -46,11 +46,21 @@
    * colour in the product (around 195 pieces of text), so that is a lot of
    * writing a good number of people cannot comfortably read.
    *
-   * #696f81 is the lightest grey that clears 4.5:1 on *every* surface here —
-   * white, the panel, the page, the sunken rows and the amber notices, worst
-   * case 4.60 — so captions stay a lighter step than body text rather than
-   * collapsing into it. Darkening further would have bought nothing but a
-   * flatter hierarchy.
+   * #696f81 clears 4.5:1 on every background caption text was found sitting
+   * on: the panel (5.01), the quiet panel and table heads (4.89), the warm
+   * notice (4.93), the tinted first-run row (4.71) and the page (4.60). The
+   * page sets the worst case and therefore the value — it is the lightest
+   * grey that clears those, so captions stay a step lighter than body text
+   * instead of collapsing into it.
+   *
+   * That list is the measured one, not a general guarantee. Checked by
+   * walking every screen, the open lead sheet, all six onboarding steps and
+   * the first-run screen and reading the computed colour behind each piece of
+   * caption text. It does NOT hold on the flat fills: chip and hairline
+   * #ebedfc is 4.31, accent-tint #eaf0ff 4.39, chip-quiet #f1f2f8 4.48 and
+   * border #e1e4ef 3.95. Caption text does not land on any of those today.
+   * If you put a caption on a chip or a tag, it is below AA and needs its own
+   * colour — do not read this comment as saying it has been covered.
    */
   --vsp-caption: #696f81; /* 11px captions, empty cells */
   --vsp-disabled: #a6abbb; /* a control that is off. NOT a value that is absent */

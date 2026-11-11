@@ -388,6 +388,40 @@
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * A dropdown wears the same chevron as everything else.
+ *
+ * Left alone, a <select> draws the browser's own arrow: a different shape and
+ * weight from the chevron this product uses everywhere else (the company menu,
+ * the disclosure rows), drawn at whatever inset the platform picks rather than
+ * the 13px the rest of the control is built on, and different again on Windows
+ * and in Safari. Padding cannot move it, which is why adding room on the right
+ * did not fix how it looked — it only reserved space the arrow ignored.
+ *
+ * So turn it off and draw ours: the same path, the same 2.2 stroke, the same
+ * quiet grey as the chevron on the company menu, inset 13px to mirror the text
+ * on the left. Every select in the product gets it, including any added later.
+ */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23676d7e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 15px 15px;
+}
+
+/* Nothing to choose from, so the chevron should not invite a click. */
+select:disabled {
+  opacity: 0.6;
+}
+
+/* A multi-select or a sized list is a box of rows, not a dropdown. */
+select[multiple],
+select[size]:not([size="1"]) {
+  background-image: none;
+}
+
 /* A table row, and the row actions that appear under the pointer. */
 .vsp-row:hover,
 .vsp-tr:hover {

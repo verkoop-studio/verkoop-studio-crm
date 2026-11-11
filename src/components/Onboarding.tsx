@@ -15,61 +15,67 @@ export const STEPS = ["Account", "Company", "Team", "You", "Checkout"] as const;
 
 export function Stepper({ step }: { step: number }) {
   return (
-    <div className="flex min-w-0 max-w-[560px] flex-[1_1_360px] items-center gap-[7px]">
-      {STEPS.map((label, index) => {
-        const number = index + 1;
-        const done = number < step;
-        const here = number === step;
-        return (
-          <span key={label} className="contents">
-            {index > 0 && (
-              <span
-                aria-hidden="true"
-                className="h-px flex-1"
-                style={{ background: done || here ? "#cfd5e8" : "var(--vsp-border)" }}
-              />
-            )}
-            {done ? (
-              <span className="flex items-center gap-1.5 text-[12px] text-good">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="9.5" strokeWidth="1.6" />
-                  <path d="m7.6 12.3 2.9 2.9 5.9-6.4" />
-                </svg>
-                {label}
-              </span>
-            ) : here ? (
-              <span
-                aria-current="step"
-                className="flex items-center gap-[7px] rounded-pill bg-accent-tint py-1 pl-[5px] pr-[11px]"
-              >
+    <>
+      {/* A five-stop rail does not fit a phone; the same fact, in words. */}
+      <span className="text-[12px] font-semibold text-accent-ink sm:hidden">
+        {`Step ${step} of ${STEPS.length} · ${STEPS[step - 1]}`}
+      </span>
+      <div className="hidden min-w-0 max-w-[560px] flex-[1_1_360px] items-center gap-[7px] sm:flex">
+        {STEPS.map((label, index) => {
+          const number = index + 1;
+          const done = number < step;
+          const here = number === step;
+          return (
+            <span key={label} className="contents">
+              {index > 0 && (
                 <span
                   aria-hidden="true"
-                  className="flex size-[18px] items-center justify-center rounded-full text-[11px] font-bold text-white"
-                  style={{ background: "var(--vsp-accent)" }}
-                >
-                  {number}
+                  className="h-px flex-1"
+                  style={{ background: done || here ? "#cfd5e8" : "var(--vsp-border)" }}
+                />
+              )}
+              {done ? (
+                <span className="flex items-center gap-1.5 text-[12px] text-good">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9.5" strokeWidth="1.6" />
+                    <path d="m7.6 12.3 2.9 2.9 5.9-6.4" />
+                  </svg>
+                  {label}
                 </span>
-                <span className="text-[12px] font-semibold text-accent-ink">{label}</span>
-              </span>
-            ) : (
-              <span className="text-[12px] text-caption">
-                {number} {label}
-              </span>
-            )}
-          </span>
-        );
-      })}
-    </div>
+              ) : here ? (
+                <span
+                  aria-current="step"
+                  className="flex items-center gap-[7px] rounded-pill bg-accent-tint py-1 pl-[5px] pr-[11px]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex size-[18px] items-center justify-center rounded-full text-[11px] font-bold text-white"
+                    style={{ background: "var(--vsp-accent)" }}
+                  >
+                    {number}
+                  </span>
+                  <span className="text-[12px] font-semibold text-accent-ink">{label}</span>
+                </span>
+              ) : (
+                <span className="text-[12px] text-caption">
+                  {number} {label}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

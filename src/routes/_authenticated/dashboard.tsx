@@ -372,7 +372,7 @@ function Kpi({
   ink?: string;
 }) {
   return (
-    <div className="flex min-h-24 min-w-0 flex-[1_1_200px] flex-col gap-[5px] border-r border-hairline px-[18px] py-4 last:border-r-0">
+    <div className="flex min-h-24 min-w-0 flex-[1_1_200px] flex-col gap-[5px] border-b border-hairline px-[18px] py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
       <span className="truncate text-[12px] text-body-quiet">{label}</span>
       <span className="text-[24px] font-bold tracking-[-0.045em] vsp-nums" style={{ color: ink }}>
         {value}

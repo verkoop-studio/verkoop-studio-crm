@@ -463,7 +463,92 @@ function LeadsPage() {
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        {/*
+         * A phone gets the same seven facts as a card, not a seven-column
+         * table squeezed into 375px. Same order, same rules: the value is
+         * muted when there is none, the last touch is red when it is stale.
+         */}
+        <div className="flex flex-col md:hidden">
+          {rows.map((lead) => {
+            const on = selected.has(lead.id);
+            return (
+              <div
+                key={lead.id}
+                className="flex flex-col gap-2.5 border-b border-hairline px-4 py-3.5 last:border-b-0"
+                style={{ background: on ? "var(--vsp-accent-tint-quiet)" : "transparent" }}
+              >
+                <span className="flex items-start gap-3">
+                  <label htmlFor={`m-sel-${lead.id}`} className="sr-only">
+                    Select {lead.company}
+                  </label>
+                  <input
+                    id={`m-sel-${lead.id}`}
+                    type="checkbox"
+                    className="mt-1.5 size-4 shrink-0"
+                    style={{ accentColor: "var(--vsp-accent)" }}
+                    checked={on}
+                    onChange={() => toggle(lead.id)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSearch({ lead: lead.id })}
+                    className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
+                  >
+                    <CompanyTile company={lead.company} />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span translate="no" className="truncate text-[14px] font-semibold text-ink">
+                        {lead.company}
+                      </span>
+                      <span translate="no" className="truncate text-[12px] text-caption">
+                        {[lead.city, lead.contact_name].filter(Boolean).join(" · ") || "—"}
+                      </span>
+                    </span>
+                    <ChannelIcon source={lead.source} />
+                  </button>
+                </span>
+                <span className="flex flex-wrap items-center gap-2.5 pl-7">
+                  <StageBadge stage={lead.stage} />
+                  <span
+                    className="text-[13px] vsp-nums"
+                    style={{
+                      color: lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                      fontWeight: lead.value_estimate == null ? 400 : 600,
+                    }}
+                  >
+                    {lead.value_estimate == null ? "Not valued" : euro(lead.value_estimate)}
+                  </span>
+                  <span className="ml-auto flex items-center gap-2.5">
+                    <LastTouch at={lead.last_touch_at ?? lead.created_at} />
+                    <OwnerAvatar id={lead.owner_id} name={nameOf(lead.owner_id)} size={22} />
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+
+          {isPending && (
+            <span role="status" className="px-4 py-8 text-[13px] text-body-quiet">
+              Loading leads…
+            </span>
+          )}
+          {isError && (
+            <span role="alert" className="px-4 py-8 text-[13px]">
+              Could not load leads.{" "}
+              <button type="button" className="font-semibold text-link" onClick={() => refetch()}>
+                Retry
+              </button>
+            </span>
+          )}
+          {!isPending && !isError && rows.length === 0 && (
+            <span className="px-4 py-10 text-center text-[13px] text-body-quiet">
+              {everything.length === 0
+                ? "Your move: no leads yet. Import a list or add the first one."
+                : "Nothing matches these filters."}
+            </span>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full border-collapse vsp-nums">
             <thead>
               <tr className="bg-sunken">

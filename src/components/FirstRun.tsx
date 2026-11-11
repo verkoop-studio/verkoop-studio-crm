@@ -292,7 +292,7 @@ export function FirstRun() {
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
-            className="flex min-h-[108px] min-w-0 flex-[1_1_210px] flex-col gap-1.5 border-r border-hairline px-[18px] py-4 last:border-r-0"
+            className="flex min-h-[108px] min-w-0 flex-[1_1_210px] flex-col gap-1.5 border-b border-hairline px-[18px] py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
           >
             <span className="truncate text-[12px] text-body-quiet">{kpi.label}</span>
             <span

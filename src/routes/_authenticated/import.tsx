@@ -380,7 +380,7 @@ function ImportPage() {
             </span>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full min-w-[560px] border-collapse">
                 <thead>
                   <tr className="bg-sunken">
                     <th

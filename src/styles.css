@@ -585,7 +585,9 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
+  /* Long values — an email, a URL — may break. Ordinary words may not: a
+     column narrower than its own heading used to spell VALUE down the page. */
   main {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 }

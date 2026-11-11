@@ -394,7 +394,10 @@ function ProspectFlow() {
             </strong>
           </span>
         </span>
-        <Link to="/dashboard" className="ml-auto text-[12px] font-semibold no-underline">
+        <Link
+          to="/dashboard"
+          className="ml-auto inline-flex items-center text-[12px] font-semibold no-underline"
+        >
           Back to the dashboard
         </Link>
       </div>

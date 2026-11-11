@@ -62,9 +62,10 @@ function CurrentConnect() {
                 van <strong>{company.name}</strong>.
               </p>
               <p className="text-sm text-muted-foreground">
-                Current leest alleen aanmaakdatum, fase, waarde, bron, campagne en soort lead. Geen
-                namen, e-mailadressen, telefoonnummers, notities of bedrijfsnamen. Een bestaand
-                rapporteringstoken blijft werken.
+                Current leest aanmaakdatum, fase, waarde, bron, campagne en soort lead, plus de naam
+                van de contactpersoon, diens e-mailadres en de bedrijfsnaam. Geen telefoonnummers,
+                adressen, notities of LinkedIn-profielen. Een bestaand rapporteringstoken blijft
+                werken.
               </p>
               <p className="text-sm text-muted-foreground">
                 Verkeerde workspace? Kies eerst de juiste workspace bovenaan en open deze link

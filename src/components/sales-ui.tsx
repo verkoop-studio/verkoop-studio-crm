@@ -164,13 +164,24 @@ export function ownerSkin(id: string | null) {
 }
 
 /** Initials from a person's name, or the canvas's two dashes for nobody. */
+/*
+ * The first letters of the first two words, which is how the canvas writes
+ * every pair of initials it draws: Tanguy De Brabandere is TD, not TB. Taking
+ * the first and the *last* word is the usual shortcut, and it is wrong for
+ * half the names in this country — anything carrying a De, Van, Van den or
+ * Vander comes out keyed to the family name's tail instead of its start.
+ */
 export function initialsOf(name: string | null | undefined, fallback = "--") {
   const cleaned = (name ?? "").trim();
   if (!cleaned) return fallback;
   const parts = cleaned.split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
-  return (first + last).toUpperCase() || fallback;
+  return (
+    parts
+      .slice(0, 2)
+      .map((part) => [...part][0] ?? "")
+      .join("")
+      .toUpperCase() || fallback
+  );
 }
 
 export function OwnerAvatar({

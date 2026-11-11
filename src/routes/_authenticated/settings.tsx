@@ -928,7 +928,15 @@ function OpenInvitationsRow() {
           const expired = Date.parse(invitation.expires_at) <= Date.now();
           return (
             <span key={invitation.id} className="flex flex-wrap items-center gap-2.5">
-              <span translate="no" className="min-w-0 flex-1 truncate text-[13px] text-ink">
+              {/*
+               * A basis wide enough to be worth reading. With flex-1 alone the
+               * role and the Take it back button took what they needed first
+               * and left the address about seven pixels, rather than wrapping.
+               */}
+              <span
+                translate="no"
+                className="min-w-0 flex-[1_1_170px] truncate text-[13px] text-ink"
+              >
                 {invitation.email}
               </span>
               <span

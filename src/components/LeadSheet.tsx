@@ -815,6 +815,11 @@ function EditableCell({
 /* ── Quotes and contracts ─────────────────────────────────────────────────── */
 
 function Paperwork({ lead, canEdit }: { lead: Lead; canEdit: boolean }) {
+  // The canvas writes each file as "uploaded by Tanguy, 3 days ago, 412 kB".
+  // It is always you: `lead-documents` only lets you read what you uploaded.
+  // See the note in src/routes/_authenticated/documents.tsx.
+  const { data: signedIn } = useCurrentUser();
+  const filedBy = signedIn?.fullName?.split(" ")[0] ?? signedIn?.email?.split("@")[0] ?? null;
   const queryClient = useQueryClient();
   const picker = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<DocumentKind>("quote");
@@ -890,6 +895,7 @@ function Paperwork({ lead, canEdit }: { lead: Lead; canEdit: boolean }) {
               </span>
               <span className="text-[11px] text-caption">
                 {[
+                  filedBy ? `uploaded by ${filedBy}` : null,
                   document.created_at ? lastTouch(document.created_at).text.toLowerCase() : null,
                   documentSize(document.metadata?.["size"] as number | undefined),
                 ]

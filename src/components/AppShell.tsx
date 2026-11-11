@@ -31,9 +31,22 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-wrap bg-page text-ink">
+      {/*
+       * The rail is the height of the window, and stays there.
+       *
+       * As a plain flex child it stretched to the height of whatever was in
+       * <main>, because that is what align-items: stretch does. On a short
+       * page nobody noticed. On a long one — Leads, with a full table — the
+       * rail grew to the height of the document and `mt-auto` dutifully parked
+       * the company menu at the bottom of *that*: a thousand pixels below the
+       * fold, under a column of empty white. h-screen and sticky give mt-auto
+       * the window to measure against instead, and overflow-y-auto lets the
+       * rail scroll inside itself on a very short window rather than pushing
+       * the menu out again.
+       */}
       <aside
         aria-label="Sidebar"
-        className="hidden w-[var(--vsp-sidebar-w)] shrink-0 flex-col gap-[26px] border-r border-border bg-panel px-4 pb-6 pt-7 md:flex"
+        className="hidden w-[var(--vsp-sidebar-w)] shrink-0 flex-col gap-[26px] overflow-y-auto border-r border-border bg-panel px-4 pb-6 pt-7 md:sticky md:top-0 md:flex md:h-screen"
       >
         <Link
           to="/dashboard"
@@ -156,7 +169,7 @@ function ProfileMenu({ compact = false }: { compact?: boolean }) {
     <div className="relative" ref={wrap}>
       {open && (
         <div
-          className="absolute bottom-full left-0 right-0 z-20 mb-[7px] rounded-panel-inner border border-border bg-panel p-1.5 shadow-menu"
+          className="absolute bottom-full left-0 right-0 z-20 mb-[7px] rounded-card border border-border bg-panel p-1.5 shadow-menu"
           style={{ minWidth: compact ? 232 : undefined }}
         >
           <span className="block px-[9px] pb-[5px] pt-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-caption">
@@ -262,14 +275,31 @@ function ProfileMenu({ compact = false }: { compact?: boolean }) {
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen(!open)}
-        className="flex min-h-12 w-full items-center gap-2.5 rounded-panel-inner border border-border px-2.5 py-2 text-left"
+        className="flex min-h-12 w-full items-center gap-2.5 rounded-card border border-border px-2.5 py-2 text-left"
         style={{ background: open ? "var(--vsp-wash)" : "var(--vsp-panel)" }}
       >
-        <span
-          aria-hidden="true"
-          className="flex size-7 shrink-0 items-center justify-center rounded-control bg-chip text-[11px] font-bold text-accent-ink"
-        >
-          {initialsOf(current?.name ?? user?.fullName, "VS")}
+        {/*
+         * People waiting for an account are marked on the tile, not beside the
+         * name. A count in the row costs about thirty pixels, which is the
+         * difference between a company name reading in full and reading
+         * "Hanssens K…" — and the name is the one thing this button exists to
+         * say. The number itself is in the menu, next to Settings, where the
+         * requests are actually handled.
+         */}
+        <span className="relative flex size-7 shrink-0">
+          <span
+            aria-hidden="true"
+            className="flex size-7 items-center justify-center rounded-control bg-chip text-[11px] font-bold text-accent-ink"
+          >
+            {initialsOf(current?.name ?? user?.fullName, "VS")}
+          </span>
+          {pending > 0 && !open && (
+            <span
+              aria-hidden="true"
+              className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-panel"
+              style={{ background: "var(--vsp-warn-dot)" }}
+            />
+          )}
         </span>
         <span className="flex min-w-0 flex-1 flex-col">
           <span translate="no" className="truncate text-[13px] font-semibold text-ink">
@@ -280,8 +310,10 @@ function ProfileMenu({ compact = false }: { compact?: boolean }) {
           </span>
         </span>
         {pending > 0 && !open && (
-          <span className="rounded-full bg-warn-bg px-[7px] py-px text-[11px] font-semibold text-warn vsp-nums">
-            {pending}
+          <span className="sr-only">
+            {pending === 1
+              ? "1 person is waiting for an account"
+              : `${pending} people are waiting for an account`}
           </span>
         )}
         <svg

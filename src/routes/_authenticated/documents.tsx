@@ -38,10 +38,16 @@ function DocumentsPage() {
   const { data: leads = [] } = usePipelineLeads();
   const ids = leads.map((lead) => lead.id).sort();
 
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles"],
+  const { data: me } = useQuery({
+    queryKey: ["profiles", "me"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, full_name, email");
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("id", auth.user.id)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -72,11 +78,21 @@ function DocumentsPage() {
     refetchInterval: 30_000,
   });
 
-  const uploader = (owner: string | undefined) => {
-    if (!owner) return null;
-    const profile = profiles.find((p) => p.id === owner);
-    return profile?.full_name?.split(" ")[0] ?? null;
-  };
+  /*
+   * Who filed it.
+   *
+   * The canvas writes each row as "Tanguy, 3 days ago, 412 kB", and the name
+   * was coming out blank: storage's list() carries no `owner` on this version,
+   * so there was nothing to look up and the row silently lost its first field.
+   *
+   * It is the signed-in user, always. `lead-documents` is readable only where
+   * `owner_id = auth.uid()` (supabase/migrations/20260930160000_lead_documents
+   * .sql), so every document this page can see is one you uploaded yourself.
+   * That also means this page cannot show a colleague's paperwork the way the
+   * canvas draws it; widening the policy is a decision about who may read whose
+   * documents, and it belongs to whoever owns that call, not to this screen.
+   */
+  const uploader = () => me?.full_name?.split(" ")[0] ?? me?.email?.split("@")[0] ?? null;
 
   const term = query.trim().toLowerCase();
   const wanted = kind === "all" ? null : kind === "quotes" ? "quote" : "contract";
@@ -231,7 +247,11 @@ function DocumentsPage() {
         <Count
           label="Contracts"
           value={isPending || isError ? "—" : String(contracts)}
-          note={`on ${data.filter((g) => g.documents.some((d) => d.category === "contract")).length} companies`}
+          note={
+            isPending || isError
+              ? "signed and unsigned"
+              : `on ${data.filter((g) => g.documents.some((d) => d.category === "contract")).length} companies`
+          }
           ink="var(--vsp-good)"
         />
       </Panel>
@@ -242,10 +262,17 @@ function DocumentsPage() {
           <span className="text-[15px] font-semibold tracking-[-0.025em]">
             Everything, by company
           </span>
+          {/*
+           * While the library is still being read this said "0 files across 0
+           * companies", which is a statement, not a placeholder — and on a
+           * slow connection it is a wrong one sitting next to a spinner.
+           */}
           <span className="ml-auto text-[12px] text-caption vsp-nums">
-            {kind === "all"
-              ? `${everything.length} files across ${withPaperwork} companies`
-              : `${shownFiles} shown, filtered to ${kind}`}
+            {isPending || isError
+              ? "\u00a0"
+              : kind === "all"
+                ? `${everything.length} files across ${withPaperwork} companies`
+                : `${shownFiles} shown, filtered to ${kind}`}
           </span>
         </span>
 
@@ -262,11 +289,47 @@ function DocumentsPage() {
             </button>
           </span>
         )}
+        {/*
+         * Three different empty libraries, and the way out of each. A
+         * workspace with no leads cannot have paperwork at all, so sending
+         * someone to "open a lead and upload its quote" would be a dead end.
+         */}
         {!isPending && !isError && groups.length === 0 && (
-          <span className="px-[18px] py-10 text-[13px] leading-[1.6] text-body-quiet">
-            {everything.length === 0
-              ? "Your move: nothing is filed yet. Open a lead and upload its quote, and it appears here."
-              : "Nothing matches that search."}
+          <span className="flex flex-wrap items-center gap-2 px-[18px] py-10 text-[13px] leading-[1.6] text-body-quiet">
+            {leads.length === 0 ? (
+              <>
+                No leads in this workspace yet, so there is nothing to file against.{" "}
+                <Link to="/import" className="font-semibold text-accent-ink underline">
+                  Import a list
+                </Link>
+              </>
+            ) : everything.length === 0 ? (
+              "Your move: nothing is filed yet. Open a lead and upload its quote, and it appears here."
+            ) : query.trim() ? (
+              <>
+                <span>
+                  Nothing matches <span className="font-semibold text-ink">{query.trim()}</span>.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="font-semibold text-accent-ink underline"
+                >
+                  Clear the search
+                </button>
+              </>
+            ) : (
+              <>
+                <span>No {kind === "quotes" ? "quotes" : "contracts"} filed yet.</span>
+                <button
+                  type="button"
+                  onClick={() => setKind("all")}
+                  className="font-semibold text-accent-ink underline"
+                >
+                  Show everything
+                </button>
+              </>
+            )}
           </span>
         )}
 
@@ -310,13 +373,13 @@ function DocumentsPage() {
                   document.category === "contract"
                     ? { bg: "var(--vsp-good-bg)", ink: "var(--vsp-good)" }
                     : { bg: "var(--vsp-accent-tint)", ink: "var(--vsp-accent-ink)" };
-                const by = uploader((document as { owner?: string }).owner);
+                const by = uploader();
                 return (
                   <button
                     key={document.id}
                     type="button"
                     onClick={() => void open(document.path)}
-                    className="vsp-doc flex w-full items-center gap-3 py-2.5 pl-[57px] pr-[18px] text-left"
+                    className="vsp-doc flex w-full items-center gap-3 py-2.5 pl-[18px] pr-[18px] text-left sm:pl-[57px]"
                   >
                     <span
                       aria-hidden="true"

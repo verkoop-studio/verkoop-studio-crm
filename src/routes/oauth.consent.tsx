@@ -155,7 +155,23 @@ function Consent() {
           <span className="text-[16px] font-semibold tracking-[-0.04em] text-ink">Sales</span>
         </span>
         <span className="ml-auto flex items-center gap-[9px] text-[12px] text-body-quiet">
-          <OwnerAvatar id={me?.id ?? null} name={me?.email ?? null} size={22} />
+          {/*
+           * The tile wants the person's initials, so give it their name. Fed
+           * the email address it produced a single letter, where the canvas
+           * draws two — every account that reaches this screen was created
+           * with a full name in its metadata.
+           */}
+          <OwnerAvatar
+            id={me?.id ?? null}
+            name={
+              (typeof me?.user_metadata?.["full_name"] === "string"
+                ? me.user_metadata["full_name"]
+                : null) ??
+              me?.email ??
+              null
+            }
+            size={22}
+          />
           {`Signed in as ${me?.email ?? "…"}`}
         </span>
       </div>

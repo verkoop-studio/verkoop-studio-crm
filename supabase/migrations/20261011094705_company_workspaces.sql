@@ -154,8 +154,8 @@ DECLARE requested text; BEGIN
  RETURN EXISTS(SELECT 1 FROM public.leads l JOIN public.user_roles r ON r.company_id=l.company_id AND r.user_id=auth.uid()
   WHERE l.id=_lead::uuid AND (requested IS NULL OR l.company_id=crm_private.current_company()));
 END $$;
-DROP POLICY crm_documents_read ON storage.objects;
-DROP POLICY crm_documents_upload ON storage.objects;
+DROP POLICY IF EXISTS crm_documents_read ON storage.objects;
+DROP POLICY IF EXISTS crm_documents_upload ON storage.objects;
 CREATE POLICY crm_documents_read ON storage.objects FOR SELECT TO authenticated USING (
  bucket_id='lead-documents' AND owner_id=(SELECT auth.uid())::text AND crm_private.document_access((storage.foldername(name))[1])
 );

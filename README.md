@@ -7,7 +7,16 @@ Build with `npm run build`; start the resulting server with `node .output/server
 
 The production CRM is deployed at https://crm.verkoop.studio and uses its configured Supabase project. Preserve the populated production database; bootstrap scripts below are for a new empty installation only.
 
-For the new project, run `supabase/bootstrap/fresh-crm.sql` once in its SQL editor. After the owner signs up, use `supabase/bootstrap/first-admin.sql` with the verified owner UUID. Configure Auth site/redirect URLs for the CRM. Google login requires your own Google provider configuration. Keep the service role key on the server only.
+For a new project, apply every file in `supabase/migrations/` in filename order. That is the only provisioning path that produces the company-scoped schema the CRM relies on. After the owner signs up, use `supabase/bootstrap/first-admin.sql` with the verified owner UUID. Configure Auth site/redirect URLs for the CRM. Google login requires your own Google provider configuration. Keep the service role key on the server only.
+
+Do not use `supabase/bootstrap/fresh-crm.sql`. It predates company workspaces and produces a database with no tenant isolation — its policies let any user holding any role row read, update and delete every lead. It is kept only as a record of the pre-workspace schema. After provisioning a new project, confirm isolation before putting data in it:
+
+```sql
+select tablename, policyname, qual from pg_policies
+where schemaname = 'public' and tablename = 'leads';
+```
+
+Every returned policy must reference `company_id`. If any does not, stop and fix the schema before continuing.
 
 The MCP endpoint is `/mcp`, powered by the standard MCP SDK. Set `CRM_PUBLIC_URL` to the deployed HTTPS origin and enable the Supabase OAuth server with `/oauth/consent` as its authorization path before connecting an AI client. Website intake is available at `/api/public/inbound-lead` using a server-only intake token configured under Settings. The production intake and authenticated MCP endpoint were verified during the 2026-10-02 audit. Authorization in an external AI client must still be tested separately.
 

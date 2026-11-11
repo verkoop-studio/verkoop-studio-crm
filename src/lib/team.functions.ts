@@ -14,7 +14,7 @@ const requestDecisionSchema = z.object({ requestId: z.string().uuid(), userId: z
 
 export const createTeamInvitation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => schema.parse(data))
+  .validator((data: unknown) => schema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { createInvitationSender, inviteMemberByEmail } =
@@ -36,12 +36,12 @@ export const createTeamInvitation = createServerFn({ method: "POST" })
 
 export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(({ data, context }) => removeMember(context.supabase, context.userId, data.userId));
 
 export const approveAccountRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => requestDecisionSchema.parse(data))
+  .validator((data: unknown) => requestDecisionSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc("decide_company_request", {
       _request_id: data.requestId,
@@ -54,7 +54,7 @@ export const approveAccountRequest = createServerFn({ method: "POST" })
 
 export const declineAccountRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => requestDecisionSchema.parse(data))
+  .validator((data: unknown) => requestDecisionSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc("decide_company_request", {
       _request_id: data.requestId,

@@ -11,7 +11,7 @@ import {
 // "Koppelen" on the Current connect page: admins of the selected company only.
 export const approveCurrentConnect = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     const state = (data as { state?: unknown } | null)?.state;
     if (!validConnectState(state))
       throw new Error("Deze koppeling is verlopen. Start opnieuw vanuit Current.");

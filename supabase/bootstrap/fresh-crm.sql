@@ -1,4 +1,14 @@
--- Fresh Sales CRM schema. Run once in a NEW empty Supabase project only.
+-- DO NOT RUN THIS FILE. It is kept only as a record of the pre-workspace schema.
+--
+-- This script predates company workspaces. It creates no `companies` table, no
+-- `crm_private` schema and no `company_id` column, and its policies resolve to
+-- "any user holding any role row reads, updates and deletes every lead" — a
+-- database provisioned from this file has NO tenant isolation whatsoever, and
+-- supabase/migrations/20261011094705_company_workspaces.sql cannot be applied
+-- on top of it to repair that.
+--
+-- To provision a new project, apply every file in supabase/migrations/ in
+-- filename order instead. See README.md.
 
 -- No leads, users, activities, or integration tokens are copied.
 

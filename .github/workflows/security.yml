@@ -1,0 +1,34 @@
+name: Security
+
+# Catches the thing that actually bit us: a critical framework advisory sitting
+# in package.json unnoticed. The weekly run matters as much as the PR run,
+# since a new advisory lands against unchanged code.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # Fails the build on high or critical. Moderate findings are reported but
+      # do not block; raise this to `moderate` once that backlog is clear.
+      - run: npm audit --audit-level=high
+      - name: Report moderate and low advisories
+        if: always()
+        run: npm audit || true

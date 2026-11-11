@@ -3,6 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { crmTools } from "./index";
+import { limitMcpRequest } from "./limits";
 import { supabaseForUser } from "./supabase";
 import type { ToolContext } from "./tool";
 
@@ -27,6 +28,10 @@ export async function handleMcp(request: Request) {
   if (request.headers.has("origin") && request.headers.get("origin") !== origin) {
     return new Response("Origin not allowed", { status: 403 });
   }
+  // Bound the body before the Supabase auth round-trip, so an oversized or
+  // deeply-batched POST costs nothing to reject.
+  const limited = await limitMcpRequest(request);
+  if (limited instanceof Response) return limited;
   const unauthorized = () =>
     Response.json(
       { error: "Authentication required" },
@@ -110,7 +115,7 @@ export async function handleMcp(request: Request) {
   const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
   try {
     await server.connect(transport);
-    return await transport.handleRequest(request);
+    return await transport.handleRequest(limited);
   } finally {
     await server.close();
   }

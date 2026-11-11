@@ -1,7 +1,27 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { securityHeaders } from "./lib/security-headers";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+// Adds CSP, HSTS, frame-ancestors and friends to every response. Runs outermost
+// so it also covers the error middleware's 500 page.
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const result = await next();
+  const headers = new Headers(result.response.headers);
+  for (const [name, value] of Object.entries(securityHeaders())) {
+    // A route that sets its own policy deliberately keeps it.
+    if (!headers.has(name)) headers.set(name, value);
+  }
+  return {
+    ...result,
+    response: new Response(result.response.body, {
+      status: result.response.status,
+      statusText: result.response.statusText,
+      headers,
+    }),
+  };
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -27,5 +47,5 @@ const csrfMiddleware = createCsrfMiddleware({
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [securityHeadersMiddleware, errorMiddleware, csrfMiddleware],
 }));

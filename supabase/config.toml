@@ -1,1 +1,17 @@
 project_id = "sales-crm"
+
+# This CRM is an OAuth authorization server, not only a client of one: an
+# assistant is pointed at /mcp, and the person who owns the workspace approves
+# it on /oauth/consent before it may read a single lead.
+#
+# The local stack ships with that server switched off, which made the consent
+# screen the one screen in this product that could not be opened in
+# development — not because the screen was broken, but because no authorization
+# could be created for it to show. Turning it on here is what lets anyone
+# register a client against the local stack, start an authorization and see the
+# real screen with real data behind it. It changes nothing about a deployed
+# project; this file configures `supabase start` on a developer's machine.
+[auth.oauth_server]
+enabled = true
+# So a client can register itself locally instead of needing one seeded by hand.
+allow_dynamic_registration = true

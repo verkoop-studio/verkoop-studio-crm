@@ -332,9 +332,7 @@ function DocumentsPage() {
               "Your move: nothing is filed yet. Open a lead and upload its quote, and it appears here."
             ) : query.trim() ? (
               <>
-                <span>
-                  Nothing matches <span className="font-semibold text-ink">{query.trim()}</span>.
-                </span>
+                <span>{`Nothing matches ${query.trim()}.`}</span>
                 <button
                   type="button"
                   onClick={() => setQuery("")}
@@ -481,7 +479,7 @@ function DocumentsPage() {
               onClick={() => setShowAll(true)}
               className="rounded-[7px] border border-border bg-panel px-[13px] py-2 text-[12px] font-semibold text-ink"
             >
-              Show the other {restGroups} companies
+              {`Show the other ${restGroups} companies`}
             </button>
           )}
           <span className="min-w-0 flex-[1_1_280px] text-[11px] leading-[1.6] text-caption">

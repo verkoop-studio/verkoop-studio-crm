@@ -158,7 +158,7 @@ export function FirstRun() {
           <span className="text-[12px] text-body">
             Set-up{" "}
             <strong className="font-semibold text-ink vsp-nums">
-              {doneCount} of {setup.length}
+              {`${doneCount} of ${setup.length}`}
             </strong>
           </span>
         </span>
@@ -179,7 +179,7 @@ export function FirstRun() {
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3 2" />
             </svg>
-            Day {trial.dayOfTrial} of {PLAN.trialDays} free
+            {`Day ${trial.dayOfTrial} of ${PLAN.trialDays} free`}
           </span>
         )}
 

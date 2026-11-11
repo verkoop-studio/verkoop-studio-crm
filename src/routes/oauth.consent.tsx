@@ -156,7 +156,7 @@ function Consent() {
         </span>
         <span className="ml-auto flex items-center gap-[9px] text-[12px] text-body-quiet">
           <OwnerAvatar id={me?.id ?? null} name={me?.email ?? null} size={22} />
-          Signed in as {me?.email ?? "…"}
+          {`Signed in as ${me?.email ?? "…"}`}
         </span>
       </div>
 
@@ -198,7 +198,7 @@ function Consent() {
 
           <div className="flex flex-col gap-[7px] text-center">
             <h1 className="m-0 text-balance text-[25px] font-bold tracking-[-0.05em] text-ink-strong">
-              {client} wants to work with your leads
+              {`${client} wants to work with your leads`}
             </h1>
             <p className="m-0 text-[14px] text-body-quiet">
               It will act as you, inside one company, and only within what this page lists.

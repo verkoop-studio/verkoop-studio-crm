@@ -94,8 +94,9 @@ function SettingsPage() {
               <path d="M12 9v4M12 17h.01" />
               <circle cx="12" cy="12" r="9" />
             </svg>
-            {pendingRequests.length} {pendingRequests.length === 1 ? "person is" : "people are"}{" "}
-            waiting for an account
+            {`${pendingRequests.length} ${
+              pendingRequests.length === 1 ? "person is" : "people are"
+            } waiting for an account`}
           </span>
         )}
       </div>
@@ -665,7 +666,9 @@ function PendingRow({ requests }: { requests: PendingRequest[] }) {
         </span>
         <span className="flex min-w-0 flex-[1_1_220px] flex-col">
           <span className="text-[13px] font-semibold text-ink">
-            {requests.length} {requests.length === 1 ? "person" : "people"} asked for an account
+            {`${requests.length} ${
+              requests.length === 1 ? "person" : "people"
+            } asked for an account`}
           </span>
           <span className="truncate text-[11px] text-caption">
             {emails.slice(0, 2).join(" and ")}

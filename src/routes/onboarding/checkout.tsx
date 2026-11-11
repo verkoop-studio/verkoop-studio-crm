@@ -643,9 +643,9 @@ function Checkout() {
                     {euroCents(PLAN.monthlyInclVat)}
                   </span>
                   <span className="flex-[1_1_100%] pt-1.5 text-[11px] leading-[1.6] text-caption">
-                    Including {Math.round(PLAN.vatRate * 100)}% VAT, which is{" "}
-                    {euroCents(PLAN.vatAmount)}, then the same day each month. We email you on{" "}
-                    {remindOn}, three days before, so it is never a surprise.
+                    {`Including ${Math.round(PLAN.vatRate * 100)}% VAT, which is ${euroCents(
+                      PLAN.vatAmount,
+                    )}, then the same day each month. We email you on ${remindOn}, three days before, so it is never a surprise.`}
                   </span>
                 </span>
               </Panel>

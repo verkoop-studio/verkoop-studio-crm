@@ -254,7 +254,7 @@ function Dashboard() {
             ))}
           </div>
           <span className="mt-auto border-t border-hairline bg-panel-quiet px-[18px] py-3 text-[12px] text-body-quiet">
-            {thisWeek} this week, against {lastWeek} the last full week.
+            {`${thisWeek} this week, against ${lastWeek} the last full week.`}
           </span>
         </Panel>
 

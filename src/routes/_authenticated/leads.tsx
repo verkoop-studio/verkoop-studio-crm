@@ -657,9 +657,9 @@ function LeadsPage() {
 
         <div className="flex flex-wrap items-center gap-3 border-t border-hairline bg-sunken px-[18px] py-3">
           <span className="text-[12px] text-body-quiet">
-            Showing {rows.length} of {filtered.length}{" "}
-            {stage === "all" ? "leads" : `in ${STAGE_META[stage as Stage]?.short ?? stage}`}, newest
-            touch first
+            {`Showing ${rows.length} of ${filtered.length} ${
+              stage === "all" ? "leads" : `in ${STAGE_META[stage as Stage]?.short ?? stage}`
+            }, newest touch first`}
           </span>
           <span className="ml-auto flex items-center gap-[7px]">
             <button

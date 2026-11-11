@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SALES_NL, SALES_PATTERNS } from "./language-sales";
 
 export type Language = "nl" | "en";
 
 const STORAGE_KEY = "sales-language";
 
-const NL: Record<string, string> = {
+const BASE_NL: Record<string, string> = {
   Dashboard: "Dashboard",
   Leads: "Leads",
   Settings: "Instellingen",
@@ -333,7 +334,12 @@ const NL: Record<string, string> = {
   "Go to home page": "Naar startpagina",
 };
 
+/* The redesigned screens bring their own strings; they live in their own file
+   so this one stays readable, and they win where a key appears in both. */
+const NL: Record<string, string> = { ...BASE_NL, ...SALES_NL };
+
 const PATTERNS: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
+  ...SALES_PATTERNS,
   [
     /^Step (\d+) of 5 — (.+)$/,
     (m) => {

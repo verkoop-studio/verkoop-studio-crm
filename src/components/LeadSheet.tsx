@@ -419,7 +419,7 @@ function ValueAndStage({
             <span
               className="text-[26px] font-bold tracking-[-0.045em] vsp-nums"
               style={{
-                color: lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                color: lead.value_estimate == null ? "var(--vsp-caption)" : "var(--vsp-ink)",
               }}
             >
               {lead.value_estimate == null ? "Not valued" : euro(lead.value_estimate)}

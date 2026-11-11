@@ -40,8 +40,20 @@
   --vsp-ink-strong: #0d1019; /* the figure itself */
   --vsp-text: #505465; /* body */
   --vsp-text-quiet: #676d7e; /* secondary body */
-  --vsp-caption: #879099; /* 11px captions, empty cells */
-  --vsp-disabled: #a6abbb; /* a value that is not there, a control that is off */
+  /*
+   * #879099, the canvas's caption grey, reads at 3.24:1 on white and 2.98:1
+   * on the page — against the 4.5:1 small text needs. It is the most-used
+   * colour in the product (around 195 pieces of text), so that is a lot of
+   * writing a good number of people cannot comfortably read.
+   *
+   * #696f81 is the lightest grey that clears 4.5:1 on *every* surface here —
+   * white, the panel, the page, the sunken rows and the amber notices, worst
+   * case 4.60 — so captions stay a lighter step than body text rather than
+   * collapsing into it. Darkening further would have bought nothing but a
+   * flatter hierarchy.
+   */
+  --vsp-caption: #696f81; /* 11px captions, empty cells */
+  --vsp-disabled: #a6abbb; /* a control that is off. NOT a value that is absent */
 
   /* Accent · chrome only */
   --vsp-accent: #254bfa;

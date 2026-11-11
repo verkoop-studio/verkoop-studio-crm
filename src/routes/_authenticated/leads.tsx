@@ -1,139 +1,98 @@
-import { WebsiteRequest } from "@/components/WebsiteRequest";
-import { LeadCategoryBadge, LeadCategoryFilter } from "@/components/LeadCategories";
-import { matchesLeadCategory, type LeadCategoryFilterValue } from "@/lib/lead-categories";
-import { usePipelineLeads } from "@/hooks/use-pipeline-leads";
-import { LeadTextField } from "@/components/LeadTextField";
-import { LeadDocuments } from "@/components/LeadDocuments";
-import { DealValueEditor } from "@/components/DealValueEditor";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Plus, Search, Star, Flag, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { PipelineTracker, StageChip } from "@/components/PipelineTracker";
+import { usePipelineLeads } from "@/hooks/use-pipeline-leads";
+import { LeadSheet } from "@/components/LeadSheet";
+import { LeadCategoryFilter } from "@/components/LeadCategories";
+import { matchesLeadCategory, type LeadCategoryFilterValue } from "@/lib/lead-categories";
 import {
+  ChannelIcon,
+  CompanyTile,
+  LastTouch,
+  OwnerAvatar,
+  StageBadge,
+  euro,
+} from "@/components/sales-ui";
+import {
+  PIPELINE_STEPS,
   SOURCES,
   STAGES,
-  CHANNELS,
   STAGE_META,
-  labelFor,
+  downloadCsv,
   formatDate,
+  labelFor,
   priorityLabel,
   toCsv,
-  downloadCsv,
   todayIso,
   type Source,
   type Stage,
-  type Channel,
 } from "@/lib/sales";
 
+const PAGE_SIZE = 25;
+
+type Search = {
+  lead?: string | undefined;
+  new?: boolean | undefined;
+  stage?: string | undefined;
+  owner?: string | undefined;
+  valued?: "no" | undefined;
+  bin?: boolean | undefined;
+};
+
 export const Route = createFileRoute("/_authenticated/leads")({
-  validateSearch: (search: Record<string, unknown>): { lead?: string } =>
-    typeof search["lead"] === "string" ? { lead: search["lead"] } : {},
+  validateSearch: (search: Record<string, unknown>): Search => {
+    const out: Search = {};
+    if (typeof search["lead"] === "string") out.lead = search["lead"];
+    if (search["new"] === true || search["new"] === "true") out.new = true;
+    if (typeof search["stage"] === "string") out.stage = search["stage"];
+    if (typeof search["owner"] === "string") out.owner = search["owner"];
+    if (search["valued"] === "no") out.valued = "no";
+    if (search["bin"] === true || search["bin"] === "true") out.bin = true;
+    return out;
+  },
   head: () => ({
     meta: [
-      { title: "Leads & outreach log | Sales CRM" },
+      { title: "Leads | Sales" },
       {
         name: "description",
         content:
-          "Search every Sales CRM lead, see who owns it, log email, LinkedIn, ads and cold-call touches, and move deals through the pipeline.",
+          "Every lead, with the three fields the rest of the product reads: value, owner and stage.",
       },
-      { property: "og:title", content: "Leads & outreach log | Sales CRM" },
-      {
-        property: "og:description",
-        content: "Shared lead database with ownership and a full outreach history per company.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LeadsPage,
 });
 
-type LeadUpdate = Database["public"]["Tables"]["leads"]["Update"];
-
-const EMPTY_LEAD = {
-  company: "",
-  contact_name: "",
-  job_title: "",
-  email: "",
-  phone: "",
-  linkedin_url: "",
-  city: "",
-
-  source: "email" as Source,
-  stage: "new" as Stage,
-  priority: "3",
-
-  campaign: "",
-  notes: "",
-};
-
+/*
+ * The leads table, in the shape the canvas settled on.
+ *
+ * Value, owner and stage are in the table rather than one level down, because
+ * they are the three fields every other screen reads. A lead with no estimate
+ * says "Not valued" in grey and is the same lead the dashboard leaves out of
+ * the open-pipeline figure. A last touch older than a week goes red here and
+ * on the board, from the same rule.
+ */
 function LeadsPage() {
   const { company } = Route.useRouteContext();
-  const [categoryFilter, setCategoryFilter] = useState<LeadCategoryFilterValue>("all");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const { data: me } = useCurrentUser();
-  const [listMode, setListMode] = useState("active");
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; company: string } | null>(null);
-  const [search, setSearch] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("all");
-  const [stageFilter, setStageFilter] = useState("all");
-  const [ownerFilter, setOwnerFilter] = useState(() => {
-    if (typeof window === "undefined") return "all";
-    return window.localStorage.getItem("leads-owner-filter") ?? "all";
-  });
-  const changeOwnerFilter = (value: string) => {
-    setOwnerFilter(value);
-    if (typeof window !== "undefined") window.localStorage.setItem("leads-owner-filter", value);
-  };
 
-  const { lead: openLeadId } = Route.useSearch();
-  const navigate = Route.useNavigate();
-  const setOpenLeadId = (id: string | null) =>
-    void navigate({ search: id ? { lead: id } : {}, replace: true });
-  const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_LEAD);
+  const [query, setQuery] = useState("");
+  const [channel, setChannel] = useState("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
+  const [category, setCategory] = useState<LeadCategoryFilterValue>("all");
 
   const {
-    data: leads = [],
-    isPending: leadsLoading,
-    isError: leadsError,
-    refetch: reloadLeads,
+    data: everything = [],
+    isPending,
+    isError,
+    refetch,
   } = usePipelineLeads(true);
 
   const { data: profiles = [] } = useQuery({
@@ -144,11 +103,655 @@ function LeadsPage() {
       return data;
     },
   });
+  const nameOf = (id: string | null) =>
+    profiles.find((p) => p.id === id)?.full_name ?? profiles.find((p) => p.id === id)?.email ?? null;
 
-  const nameFor = (id: string | null) =>
-    profiles.find((p) => p.id === id)?.full_name ?? "Unassigned";
+  const inBin = search.bin === true;
+  const stage = search.stage ?? "all";
+  const owner = search.owner ?? "all";
 
-  const createLead = useMutation({
+  const setSearch = (patch: Search) => {
+    setPage(0);
+    void navigate({ search: (old) => ({ ...old, ...patch }), replace: true });
+  };
+
+  /** Everything that is not in the bin, before the stage chips narrow it. */
+  const live = useMemo(
+    () =>
+      everything.filter((lead) => {
+        if (inBin ? !lead.deleted_at : Boolean(lead.deleted_at)) return false;
+        if (owner === "mine" && lead.owner_id !== me?.id) return false;
+        if (owner === "nobody" && lead.owner_id) return false;
+        if (!["all", "mine", "nobody"].includes(owner) && lead.owner_id !== owner) return false;
+        if (channel !== "all" && lead.source !== channel) return false;
+        if (search.valued === "no" && lead.value_estimate != null) return false;
+        if (!matchesLeadCategory(lead, category)) return false;
+        const term = query.trim().toLowerCase();
+        if (!term) return true;
+        return [lead.company, lead.contact_name, lead.email, lead.city, lead.campaign]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(term));
+      }),
+    [everything, inBin, owner, channel, query, category, search.valued, me?.id],
+  );
+
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { all: live.length };
+    for (const option of STAGES) map[option.value] = 0;
+    for (const lead of live) map[lead.stage] = (map[lead.stage] ?? 0) + 1;
+    return map;
+  }, [live]);
+
+  const filtered = useMemo(
+    () =>
+      live
+        .filter((lead) => stage === "all" || lead.stage === stage)
+        .sort(
+          (a, b) =>
+            Date.parse(b.last_touch_at ?? b.created_at) -
+            Date.parse(a.last_touch_at ?? a.created_at),
+        ),
+    [live, stage],
+  );
+
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const current = Math.min(page, pages - 1);
+  const rows = filtered.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+
+  const binCount = everything.filter((lead) => lead.deleted_at).length;
+  const openLead = everything.find((lead) => lead.id === search.lead) ?? null;
+
+  const bulk = useMutation({
+    mutationFn: async (patch: { stage?: Stage; owner_id?: string | null }) => {
+      const ids = [...selected];
+      const { error } = await supabase.from("leads").update(patch).in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`${count} leads updated`);
+      setSelected(new Set());
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const toggle = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  };
+
+  const exportSelected = () => {
+    const chosen = filtered.filter((lead) => selected.has(lead.id));
+    const list = chosen.length ? chosen : filtered;
+    const headers = [
+      "Company",
+      "City",
+      "Contact",
+      "Job title",
+      "Email",
+      "Phone",
+      "LinkedIn",
+      "Website",
+      "Country",
+      "Via",
+      "Campaign",
+      "Stage",
+      "Value",
+      "Importance",
+      "Owner",
+      "Last touch",
+    ];
+    downloadCsv(
+      `sales-leads-${todayIso()}.csv`,
+      toCsv(
+        headers,
+        list.map((lead) => [
+          lead.company,
+          lead.city,
+          lead.contact_name,
+          lead.job_title,
+          lead.email,
+          lead.phone,
+          lead.linkedin_url,
+          lead.website,
+          lead.country,
+          labelFor(SOURCES, lead.source),
+          lead.campaign,
+          STAGE_META[lead.stage as Stage].short,
+          lead.value_estimate ?? "",
+          priorityLabel(lead.priority),
+          nameOf(lead.owner_id) ?? "",
+          lead.last_touch_at ? formatDate(lead.last_touch_at) : "",
+        ]),
+      ),
+    );
+    toast.success(`${list.length} leads exported`);
+  };
+
+  const stageTabs = [
+    { value: "all", label: inBin ? "Everything in the bin" : "All open and closed" },
+    ...STAGES.map((option) => ({ value: option.value, label: STAGE_META[option.value].short })),
+  ];
+
+  return (
+    <div className="flex flex-col gap-3.5">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="relative flex min-w-[180px] flex-[0_1_280px]">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--vsp-caption)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+          <label htmlFor="lead-search" className="sr-only">
+            Search leads
+          </label>
+          <input
+            id="lead-search"
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(0);
+            }}
+            placeholder="Company, contact or email"
+            className="min-h-10 w-full rounded-control border border-border bg-panel py-2.5 pl-[34px] pr-[13px] text-[13px] text-ink"
+          />
+        </span>
+
+        <label htmlFor="lead-owner" className="sr-only">
+          Owner
+        </label>
+        <select
+          id="lead-owner"
+          value={owner}
+          onChange={(e) => setSearch({ owner: e.target.value })}
+          className="min-h-10 rounded-control border border-border bg-panel px-[13px] text-[13px] font-medium text-body"
+        >
+          <option value="all">Owner: everyone</option>
+          <option value="mine">Owner: me</option>
+          <option value="nobody">Owner: nobody yet</option>
+          {profiles
+            .filter((p) => p.id !== me?.id)
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                Owner: {p.full_name ?? p.email}
+              </option>
+            ))}
+        </select>
+
+        <label htmlFor="lead-channel" className="sr-only">
+          Channel
+        </label>
+        <select
+          id="lead-channel"
+          value={channel}
+          onChange={(e) => {
+            setChannel(e.target.value);
+            setPage(0);
+          }}
+          className="min-h-10 rounded-control border border-border bg-panel px-[13px] text-[13px] font-medium text-body"
+        >
+          <option value="all">All channels</option>
+          {SOURCES.map((source) => (
+            <option key={source.value} value={source.value}>
+              {source.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="ml-auto flex items-center gap-2.5">
+          <Link
+            to="/import"
+            className="flex min-h-10 items-center gap-2 rounded-control border border-border bg-panel px-[13px] py-2.5 text-[13px] font-semibold text-ink no-underline"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3v12M8 11l4 4 4-4" />
+              <path d="M4 19h16" />
+            </svg>
+            Import a list
+          </Link>
+          <button
+            type="button"
+            onClick={() => setSearch({ new: true })}
+            className="flex min-h-10 items-center gap-2 rounded-control px-[15px] py-2.5 text-[13px] font-semibold text-white shadow-raised"
+            style={{ background: "var(--vsp-accent)" }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            New lead
+          </button>
+        </div>
+      </div>
+
+      {/* Stage chips, with the count each one actually holds */}
+      <div role="group" aria-label="Stage" className="flex flex-wrap gap-[7px]">
+        {stageTabs.map((tab) => {
+          const on = stage === tab.value;
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setSearch({ stage: tab.value === "all" ? undefined : tab.value })}
+              className="flex min-h-[38px] items-center gap-2 rounded-pill border px-[13px] py-[7px] text-[13px]"
+              style={{
+                background: on ? "var(--vsp-accent-tint)" : "var(--vsp-panel)",
+                borderColor: on ? "var(--vsp-accent)" : "var(--vsp-border)",
+                color: on ? "var(--vsp-accent-ink)" : "var(--vsp-text)",
+                fontWeight: on ? 600 : 500,
+              }}
+            >
+              {tab.label}
+              <span
+                className="text-[12px] font-semibold vsp-nums"
+                style={{ color: on ? "var(--vsp-accent-ink)" : "var(--vsp-caption)" }}
+              >
+                {counts[tab.value] ?? 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <LeadCategoryFilter
+        companyId={company.id}
+        leads={everything.filter((lead) => (inBin ? lead.deleted_at : !lead.deleted_at))}
+        value={category}
+        onChange={(value) => {
+          setCategory(value);
+          setPage(0);
+        }}
+      />
+
+      {/* The table */}
+      <div className="flex flex-col overflow-hidden rounded-panel border border-border bg-panel">
+        {selected.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2.5 border-b border-accent-tint-line bg-accent-tint px-[18px] py-[11px]">
+            <span className="text-[13px] font-semibold text-accent-ink vsp-nums">
+              {selected.size} selected
+            </span>
+            <label htmlFor="bulk-stage" className="sr-only">
+              Move stage
+            </label>
+            <select
+              id="bulk-stage"
+              value=""
+              disabled={bulk.isPending}
+              onChange={(e) => e.target.value && bulk.mutate({ stage: e.target.value as Stage })}
+              className="rounded-[7px] border border-accent-tint-line bg-panel px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+            >
+              <option value="">Move stage</option>
+              {STAGES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {STAGE_META[option.value].short}
+                </option>
+              ))}
+            </select>
+            <label htmlFor="bulk-owner" className="sr-only">
+              Assign owner
+            </label>
+            <select
+              id="bulk-owner"
+              value=""
+              disabled={bulk.isPending}
+              onChange={(e) =>
+                e.target.value &&
+                bulk.mutate({ owner_id: e.target.value === "none" ? null : e.target.value })
+              }
+              className="rounded-[7px] border border-accent-tint-line bg-panel px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+            >
+              <option value="">Assign owner</option>
+              <option value="none">Nobody</option>
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.full_name ?? p.email}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={exportSelected}
+              className="rounded-[7px] border border-accent-tint-line bg-panel px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+            >
+              Export
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set(filtered.map((lead) => lead.id)))}
+              className="rounded-[7px] border border-accent-tint-line bg-panel px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+            >
+              Select all {filtered.length}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="ml-auto px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse vsp-nums">
+            <thead>
+              <tr className="bg-sunken">
+                <th scope="col" className="w-[42px] border-b border-hairline py-[11px] pl-[18px]">
+                  <label htmlFor="sel-all" className="sr-only">
+                    Select all
+                  </label>
+                  <input
+                    id="sel-all"
+                    type="checkbox"
+                    className="m-0 size-4"
+                    style={{ accentColor: "var(--vsp-accent)" }}
+                    checked={rows.length > 0 && rows.every((lead) => selected.has(lead.id))}
+                    onChange={(e) =>
+                      setSelected(e.target.checked ? new Set(rows.map((l) => l.id)) : new Set())
+                    }
+                  />
+                </th>
+                <Th>Company</Th>
+                <Th>Contact</Th>
+                <Th className="w-[52px]">Via</Th>
+                <Th>Stage</Th>
+                <Th align="right">Value</Th>
+                <Th>Last touch</Th>
+                <Th align="right" className="pl-3.5 pr-[18px]">
+                  Owner
+                </Th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((lead) => {
+                const on = selected.has(lead.id);
+                return (
+                  <tr
+                    key={lead.id}
+                    className="vsp-tr cursor-pointer"
+                    style={{ background: on ? "var(--vsp-accent-tint-quiet)" : "transparent" }}
+                    onClick={() => setSearch({ lead: lead.id })}
+                  >
+                    <td
+                      className="border-b border-hairline py-3 pl-[18px] align-middle"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <label htmlFor={`sel-${lead.id}`} className="sr-only">
+                        Select {lead.company}
+                      </label>
+                      <input
+                        id={`sel-${lead.id}`}
+                        type="checkbox"
+                        className="m-0 size-4"
+                        style={{ accentColor: "var(--vsp-accent)" }}
+                        checked={on}
+                        onChange={() => toggle(lead.id)}
+                      />
+                    </td>
+                    <td className="border-b border-hairline px-3 py-3">
+                      <span className="flex items-center gap-2.5">
+                        <CompanyTile company={lead.company} />
+                        <span className="flex min-w-0 flex-col">
+                          <span className="truncate text-[13px] font-semibold text-ink">
+                            {lead.company}
+                          </span>
+                          <span className="truncate text-[11px] text-caption">
+                            {lead.city ?? "—"}
+                          </span>
+                        </span>
+                      </span>
+                    </td>
+                    <td className="border-b border-hairline px-3 py-3">
+                      <span className="truncate text-[13px] text-ink">
+                        {lead.contact_name ?? "—"}
+                      </span>
+                    </td>
+                    <td className="border-b border-hairline px-3 py-3">
+                      <ChannelIcon source={lead.source} />
+                    </td>
+                    <td className="border-b border-hairline px-3 py-3">
+                      <StageBadge stage={lead.stage} />
+                    </td>
+                    <td className="border-b border-hairline px-3 py-3 text-right">
+                      <span
+                        className="text-[13px]"
+                        style={{
+                          color:
+                            lead.value_estimate == null
+                              ? "var(--vsp-disabled)"
+                              : "var(--vsp-ink)",
+                          fontWeight: lead.value_estimate == null ? 400 : 600,
+                        }}
+                      >
+                        {lead.value_estimate == null ? "Not valued" : euro(lead.value_estimate)}
+                      </span>
+                    </td>
+                    <td className="border-b border-hairline px-3 py-3">
+                      <LastTouch at={lead.last_touch_at ?? lead.created_at} />
+                    </td>
+                    <td
+                      className="border-b border-hairline py-3 pl-3.5 pr-[18px] text-right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span className="vsp-act inline-flex gap-1">
+                          <button
+                            type="button"
+                            aria-label={`Log a call with ${lead.company}`}
+                            title="Log a call"
+                            onClick={() => setSearch({ lead: lead.id })}
+                            className="flex size-7 items-center justify-center rounded-[7px] border border-border bg-panel text-body"
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.9"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Open ${lead.company}`}
+                            title="Open the lead"
+                            onClick={() => setSearch({ lead: lead.id })}
+                            className="flex size-7 items-center justify-center rounded-[7px] border border-border bg-panel text-body"
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M5 12h13M13 6l6 6-6 6" />
+                            </svg>
+                          </button>
+                        </span>
+                        <OwnerAvatar id={lead.owner_id} name={nameOf(lead.owner_id)} />
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {isPending && (
+                <tr>
+                  <td colSpan={8} role="status" className="px-[18px] py-8 text-[13px] text-body-quiet">
+                    Loading leads…
+                  </td>
+                </tr>
+              )}
+              {isError && (
+                <tr>
+                  <td colSpan={8} role="alert" className="px-[18px] py-8 text-[13px]">
+                    Could not load leads.{" "}
+                    <button
+                      type="button"
+                      className="font-semibold text-accent"
+                      onClick={() => refetch()}
+                    >
+                      Retry
+                    </button>
+                  </td>
+                </tr>
+              )}
+              {!isPending && !isError && rows.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-[18px] py-10 text-center text-[13px] text-body-quiet"
+                  >
+                    {everything.length === 0
+                      ? "Your move: no leads yet. Import a list or add the first one."
+                      : "Nothing matches these filters."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-hairline bg-sunken px-[18px] py-3">
+          <span className="text-[12px] text-body-quiet">
+            Showing {rows.length} of {filtered.length}{" "}
+            {stage === "all" ? "leads" : `in ${STAGE_META[stage as Stage]?.short ?? stage}`}, newest
+            touch first
+          </span>
+          <span className="ml-auto flex items-center gap-[7px]">
+            <button
+              type="button"
+              disabled={current === 0}
+              onClick={() => setPage(current - 1)}
+              className="rounded-[7px] border border-border bg-panel px-3 py-[7px] text-[12px] font-semibold text-ink disabled:cursor-not-allowed disabled:text-disabled"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={current >= pages - 1}
+              onClick={() => setPage(current + 1)}
+              className="rounded-[7px] border border-border bg-panel px-3 py-[7px] text-[12px] font-semibold text-ink disabled:cursor-not-allowed disabled:text-disabled"
+            >
+              Next
+            </button>
+          </span>
+        </div>
+      </div>
+
+      <span className="flex flex-wrap items-center gap-2 text-[11px] leading-[1.6] text-caption">
+        A lead with no estimated value is not counted in the open pipeline figure on the dashboard.
+        Value, owner and stage are the three fields the rest of the product reads, so they sit in
+        the table rather than one level down.
+        {binCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setSearch({ bin: inBin ? undefined : true, stage: undefined })}
+            className="font-semibold text-accent-ink underline"
+          >
+            {inBin ? "Back to the live leads" : `The bin holds ${binCount}`}
+          </button>
+        )}
+      </span>
+
+      {openLead && (
+        <LeadSheet
+          key={openLead.id}
+          lead={openLead}
+          profiles={profiles}
+          onClose={() => setSearch({ lead: undefined })}
+        />
+      )}
+
+      {search.new && <NewLead onClose={() => setSearch({ new: undefined })} />}
+    </div>
+  );
+}
+
+function Th({
+  children,
+  align = "left",
+  className = "",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  return (
+    <th
+      scope="col"
+      className={`border-b border-hairline px-3 py-[11px] text-[11px] font-semibold uppercase tracking-[0.06em] text-caption ${className}`}
+      style={{ textAlign: align }}
+    >
+      {children}
+    </th>
+  );
+}
+
+/* ── New lead ─────────────────────────────────────────────────────────────── */
+
+const EMPTY = {
+  company: "",
+  contact_name: "",
+  job_title: "",
+  email: "",
+  phone: "",
+  city: "",
+  campaign: "",
+  source: "email" as Source,
+  stage: "new" as Stage,
+};
+
+function NewLead({ onClose }: { onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const [form, setForm] = useState(EMPTY);
+
+  const create = useMutation({
     mutationFn: async () => {
       if (!me) throw new Error("Not signed in");
       const { error } = await supabase.from("leads").insert({
@@ -157,15 +760,10 @@ function LeadsPage() {
         job_title: form.job_title || null,
         email: form.email || null,
         phone: form.phone || null,
-        linkedin_url: form.linkedin_url || null,
         city: form.city || null,
-
+        campaign: form.campaign || null,
         source: form.source,
         stage: form.stage,
-        priority: Number(form.priority),
-
-        campaign: form.campaign || null,
-        notes: form.notes || null,
         owner_id: me.id,
         created_by: me.id,
       });
@@ -173,1038 +771,157 @@ function LeadsPage() {
     },
     onSuccess: () => {
       toast.success("Lead added");
-      setForm(EMPTY_LEAD);
-      setAddOpen(false);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      onClose();
     },
     onError: (error: Error) => toast.error(error.message),
   });
-
-  const updateLead = useMutation({
-    scope: { id: "lead-detail-updates" },
-    mutationFn: async ({ id, patch }: { id: string; patch: LeadUpdate }) => {
-      const { error } = await supabase
-        .from("leads")
-        .update(patch)
-        .eq("id", id)
-        .select("id")
-        .single();
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["leads"] }),
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  const matchingLeads = useMemo(() => {
-    const term = search.toLowerCase().trim();
-    return leads.filter((lead) => {
-      if (listMode === "trash" ? !lead.deleted_at : Boolean(lead.deleted_at)) return false;
-      if (listMode === "flagged" && !lead.flagged) return false;
-      if (sourceFilter !== "all" && lead.source !== sourceFilter) return false;
-      if (stageFilter !== "all" && lead.stage !== stageFilter) return false;
-      if (ownerFilter === "mine" && lead.owner_id !== me?.id) return false;
-      if (ownerFilter === "unassigned" && lead.owner_id) return false;
-      if (!["all", "mine", "unassigned"].includes(ownerFilter) && lead.owner_id !== ownerFilter)
-        return false;
-      if (!term) return true;
-      return [lead.company, lead.contact_name, lead.email, lead.city, lead.campaign]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term));
-    });
-  }, [leads, listMode, search, sourceFilter, stageFilter, ownerFilter, me?.id]);
-  const filtered = matchingLeads.filter((lead) => matchesLeadCategory(lead, categoryFilter));
-
-  // Every signed-in rep can update accounts: stage, value, notes and ownership.
-  const canManageLead = (_lead: { owner_id: string | null; created_by: string | null }) =>
-    Boolean(me);
-
-  const actionsFor = (lead: {
-    id: string;
-    company: string;
-    flagged: boolean;
-    deleted_at: string | null;
-  }) => (
-    <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
-      {lead.deleted_at ? (
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!me || updateLead.isPending}
-          onClick={() =>
-            updateLead.mutate(
-              { id: lead.id, patch: { deleted_at: null } },
-              {
-                onSuccess: () => {
-                  setOpenLeadId(null);
-                  toast.success("Lead hersteld");
-                },
-              },
-            )
-          }
-        >
-          <Undo2 className="mr-2 size-4" />
-          Herstellen
-        </Button>
-      ) : (
-        <>
-          <Button
-            size="sm"
-            variant={lead.flagged ? "secondary" : "outline"}
-            aria-label={
-              lead.flagged ? `Vlag verwijderen: ${lead.company}` : `Markeren: ${lead.company}`
-            }
-            aria-pressed={lead.flagged}
-            disabled={!me || updateLead.isPending}
-            onClick={() => updateLead.mutate({ id: lead.id, patch: { flagged: !lead.flagged } })}
-          >
-            <Flag
-              className={`mr-2 size-4 ${lead.flagged ? "fill-amber-400 text-amber-600" : ""}`}
-            />
-            {lead.flagged ? "Gemarkeerd" : "Markeren"}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-destructive"
-            aria-label={`Verwijderen: ${lead.company}`}
-            disabled={!me || updateLead.isPending}
-            onClick={() => setDeleteTarget(lead)}
-          >
-            <Trash2 className="mr-2 size-4" />
-            Verwijderen
-          </Button>
-        </>
-      )}
-    </div>
-  );
-
-  const exportCsv = () => {
-    const headers = [
-      "Company",
-      "Contact",
-      "Job title",
-      "Email",
-      "Phone",
-      "LinkedIn",
-      "Website",
-      "City",
-      "Country",
-      "Channel",
-      "Campaign",
-      "Stage",
-      "Importance",
-      "Owner",
-      "Last touch",
-    ];
-    const rows = filtered.map((lead) => [
-      lead.company,
-      lead.contact_name,
-      lead.job_title,
-      lead.email,
-      lead.phone,
-      lead.linkedin_url,
-      lead.website,
-      lead.city,
-      lead.country,
-      labelFor(SOURCES, lead.source),
-      lead.campaign,
-      STAGE_META[lead.stage as Stage].short,
-      priorityLabel(lead.priority),
-
-      nameFor(lead.owner_id),
-      lead.last_touch_at ? formatDate(lead.last_touch_at) : "",
-    ]);
-    downloadCsv(`sales-crm-leads-${todayIso()}.csv`, toCsv(headers, rows));
-    toast.success(`${rows.length} leads exported`);
-  };
-
-  const openLead = leads.find((l) => l.id === openLeadId) ?? null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="break-words text-3xl sm:text-4xl">Leads</h1>
-          <p className="text-sm text-muted-foreground">
-            {filtered.length} leads ·{" "}
-            {listMode === "trash" ? "Prullenbak" : listMode === "flagged" ? "Gemarkeerd" : "Actief"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={exportCsv}>
-            <Download className="size-4" /> Export CSV
-          </Button>
-          <Dialog
-            open={addOpen}
-            onOpenChange={(open) => {
-              setAddOpen(open);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="size-4" /> New lead
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>New lead</DialogTitle>
-                <DialogDescription>
-                  Log a company from any channel. You become the owner.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Company *">
-                  <Input
-                    value={form.company}
-                    onChange={(e) => setForm({ ...form, company: e.target.value })}
-                  />
-                </Field>
-                <Field label="Contact name">
-                  <Input
-                    value={form.contact_name}
-                    onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
-                  />
-                </Field>
-                <Field label="Job title">
-                  <Input
-                    value={form.job_title}
-                    onChange={(e) => setForm({ ...form, job_title: e.target.value })}
-                  />
-                </Field>
-                <Field label="Email">
-                  <Input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  />
-                </Field>
-                <Field label="Phone">
-                  <Input
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  />
-                </Field>
-                <Field label="LinkedIn URL">
-                  <Input
-                    value={form.linkedin_url}
-                    onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })}
-                  />
-                </Field>
-                <Field label="City">
-                  <Input
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  />
-                </Field>
-                <Field label="Campaign / list">
-                  <Input
-                    value={form.campaign}
-                    onChange={(e) => setForm({ ...form, campaign: e.target.value })}
-                  />
-                </Field>
-                <Field label="Source">
-                  <Select
-                    value={form.source}
-                    onValueChange={(value) => setForm({ ...form, source: value as Source })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SOURCES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Pipeline stage">
-                  <Select
-                    value={form.stage}
-                    onValueChange={(value) => setForm({ ...form, stage: value as Stage })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STAGES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {STAGE_META[s.value].label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field label="Importance">
-                  <Select
-                    value={form.priority}
-                    onValueChange={(value) => setForm({ ...form, priority: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[5, 4, 3, 2, 1].map((p) => (
-                        <SelectItem key={p} value={String(p)}>
-                          {priorityLabel(p)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Notes">
-                    <Textarea
-                      value={form.notes}
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    />
-                  </Field>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={() => createLead.mutate()}
-                  disabled={!form.company || createLead.isPending}
-                >
-                  Save lead
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2" aria-label="Leadweergave">
-        {[
-          { value: "active", label: "Actieve leads" },
-          { value: "flagged", label: "Gemarkeerd" },
-          { value: "trash", label: "Prullenbak" },
-        ].map((mode) => (
-          <Button
-            key={mode.value}
-            variant={listMode === mode.value ? "default" : "outline"}
-            aria-pressed={listMode === mode.value}
-            onClick={() => setListMode(mode.value)}
-          >
-            {mode.label}
-          </Button>
-        ))}
-      </div>
-      {listMode === "trash" && (
-        <p className="text-sm text-muted-foreground">
-          Verwijderde leads tellen niet mee in je dashboard of prospectflow. Je kunt ze hier
-          herstellen, inclusief hun documenten en geschiedenis.
-        </p>
-      )}
-      <Card>
-        <CardContent className="flex flex-wrap gap-3 pt-6">
-          <div className="relative min-w-0 basis-full sm:min-w-56 sm:flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Search company, contact, city, campaign…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <FilterSelect
-            value={sourceFilter}
-            onChange={setSourceFilter}
-            allLabel="All channels"
-            options={SOURCES}
-          />
-          <FilterSelect
-            value={stageFilter}
-            onChange={setStageFilter}
-            allLabel="All stages"
-            options={STAGES}
-          />
-          <Select value={ownerFilter} onValueChange={changeOwnerFilter}>
-            <SelectTrigger className="w-52">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Everyone's leads</SelectItem>
-              <SelectItem value="mine">Only my leads</SelectItem>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {profiles
-                .filter((p) => p.id !== me?.id)
-                .map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.full_name ?? p.email ?? "Team member"}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          <p className="w-full text-xs text-muted-foreground">
-            Everyone on the sales team sees every lead added here — also the ones added by Claude or
-            the website.
-            {ownerFilter !== "all" && (
-              <>
-                {" "}
-                You are looking at a filtered list.{" "}
-                <button
-                  type="button"
-                  className="font-medium text-primary underline"
-                  onClick={() => changeOwnerFilter("all")}
-                >
-                  Show everyone's leads
-                </button>
-              </>
-            )}
-          </p>
-        </CardContent>
-      </Card>
-
-      <LeadCategoryFilter
-        companyId={company.id}
-        leads={matchingLeads}
-        value={categoryFilter}
-        onChange={setCategoryFilter}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 cursor-default"
+        style={{ background: "#0b0f1c4d" }}
       />
-
-      <div className="space-y-3 md:hidden">
-        {filtered.map((lead) => (
-          <article key={lead.id} className="rounded-xl border bg-card p-4">
+      <div
+        role="dialog"
+        aria-label="New lead"
+        className="relative flex max-h-[85vh] w-full max-w-[520px] flex-col overflow-y-auto rounded-panel border border-border bg-panel p-[22px] shadow-dialog"
+      >
+        <h2 className="m-0 text-[20px] font-bold tracking-[-0.045em] text-ink-strong">New lead</h2>
+        <p className="mb-4 mt-1 text-[13px] text-body-quiet">
+          A company from any channel. You become the owner.
+        </p>
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (form.company.trim()) create.mutate();
+          }}
+        >
+          <div className="flex flex-wrap gap-3">
+            <NewField label="Company" required basis="100%">
+              <input
+                required
+                value={form.company}
+                onChange={(e) => setForm({ ...form, company: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="Contact name">
+              <input
+                value={form.contact_name}
+                onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="Job title">
+              <input
+                value={form.job_title}
+                onChange={(e) => setForm({ ...form, job_title: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="Email">
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="Phone">
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="City">
+              <input
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="Campaign">
+              <input
+                value={form.campaign}
+                onChange={(e) => setForm({ ...form, campaign: e.target.value })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              />
+            </NewField>
+            <NewField label="Via">
+              <select
+                value={form.source}
+                onChange={(e) => setForm({ ...form, source: e.target.value as Source })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              >
+                {SOURCES.map((source) => (
+                  <option key={source.value} value={source.value}>
+                    {source.label}
+                  </option>
+                ))}
+              </select>
+            </NewField>
+            <NewField label="Where it lands">
+              <select
+                value={form.stage}
+                onChange={(e) => setForm({ ...form, stage: e.target.value as Stage })}
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+              >
+                {PIPELINE_STEPS.map((step) => (
+                  <option key={step} value={step}>
+                    {STAGE_META[step].short}
+                  </option>
+                ))}
+              </select>
+            </NewField>
+          </div>
+          <div className="flex items-center gap-2.5 pt-1">
+            <button
+              type="submit"
+              disabled={!form.company.trim() || create.isPending}
+              className="min-h-11 rounded-control px-4 text-[14px] font-semibold text-white shadow-raised disabled:opacity-50"
+              style={{ background: "var(--vsp-accent)" }}
+            >
+              {create.isPending ? "Saving…" : "Save lead"}
+            </button>
             <button
               type="button"
-              onClick={() => setOpenLeadId(lead.id)}
-              className="min-h-11 w-full break-words text-left font-semibold text-primary"
+              onClick={onClose}
+              className="min-h-11 rounded-control border border-border-control bg-panel px-4 text-[14px] font-semibold text-ink"
             >
-              {lead.company}
+              Cancel
             </button>
-            <p className="break-words text-sm">{lead.contact_name ?? "—"}</p>
-            <p className="break-all text-xs text-muted-foreground">{lead.email ?? ""}</p>
-            <LeadCategoryBadge lead={lead} className="mt-2" />
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <Badge variant="outline">{labelFor(SOURCES, lead.source)}</Badge>
-              <StageChip
-                stage={lead.stage}
-                canEdit={canManageLead(lead) && !lead.deleted_at}
-                onStageChange={(stage) => updateLead.mutate({ id: lead.id, patch: { stage } })}
-              />
-            </div>
-            <p className="my-3 text-xs text-muted-foreground">{nameFor(lead.owner_id)}</p>
-            {actionsFor(lead)}
-          </article>
-        ))}
-        {leadsLoading && <p role="status">Loading leads…</p>}
-        {leadsError && (
-          <p role="alert">
-            Could not load leads. <Button onClick={() => reloadLeads()}>Retry</Button>
-          </p>
-        )}
-        {!leadsLoading && !leadsError && !filtered.length && (
-          <p className="py-6 text-sm text-muted-foreground">No leads match these filters.</p>
-        )}
+          </div>
+        </form>
       </div>
-      <div className="panel hidden overflow-x-auto md:block">
-        <Table className="leads-table">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Company</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Channel</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>Acties</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((lead) => (
-              <TableRow
-                key={lead.id}
-                className="cursor-pointer"
-                onClick={() => setOpenLeadId(lead.id)}
-              >
-                <TableCell>
-                  <div className="flex items-center gap-2 font-medium">
-                    {lead.priority >= 4 && <Star className="size-3.5 text-primary" />}
-                    <button
-                      type="button"
-                      className="text-left hover:underline"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setOpenLeadId(lead.id);
-                      }}
-                    >
-                      {lead.company}
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {lead.city ?? "—"} · {priorityLabel(lead.priority)}
-                  </p>
-                  <LeadCategoryBadge lead={lead} className="mt-2" />
-                </TableCell>
-                <TableCell className="text-sm">
-                  {lead.contact_name ?? "—"}
-                  <p className="text-xs text-muted-foreground">{lead.email ?? ""}</p>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{labelFor(SOURCES, lead.source)}</Badge>
-                </TableCell>
-                <TableCell onClick={(event) => event.stopPropagation()}>
-                  <StageChip
-                    stage={lead.stage}
-                    canEdit={canManageLead(lead) && !lead.deleted_at}
-                    onStageChange={(stage) => updateLead.mutate({ id: lead.id, patch: { stage } })}
-                  />
-                </TableCell>
-
-                <TableCell className="text-sm">{nameFor(lead.owner_id)}</TableCell>
-                <TableCell>{actionsFor(lead)}</TableCell>
-              </TableRow>
-            ))}
-            {leadsLoading && (
-              <TableRow>
-                <TableCell colSpan={6} role="status">
-                  Loading leads…
-                </TableCell>
-              </TableRow>
-            )}
-            {leadsError && (
-              <TableRow>
-                <TableCell colSpan={6} role="alert">
-                  Could not load leads. <Button onClick={() => reloadLeads()}>Retry</Button>
-                </TableCell>
-              </TableRow>
-            )}
-            {!leadsLoading && !leadsError && filtered.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                  No leads match these filters.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Sheet open={Boolean(openLead)} onOpenChange={(open) => !open && setOpenLeadId(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-          {openLead && (
-            <>
-              <SheetHeader>
-                <SheetTitle className="text-2xl">{openLead.company}</SheetTitle>
-                <LeadCategoryBadge lead={openLead} />
-              </SheetHeader>
-              <div className="pt-4">{actionsFor(openLead)}</div>
-              <LeadDetail
-                key={openLead.id}
-                lead={openLead}
-                ownerName={nameFor(openLead.owner_id)}
-                profiles={profiles}
-                canManage={Boolean(me) && !openLead.deleted_at}
-
-                onPatch={(patch) => updateLead.mutateAsync({ id: openLead.id, patch })}
-              />
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-      <Dialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => !open && !updateLead.isPending && setDeleteTarget(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Lead verwijderen?</DialogTitle>
-            <DialogDescription>
-              {deleteTarget?.company} wordt naar de prullenbak verplaatst. De aanvraag, documenten
-              en geschiedenis blijven bewaard. Je kunt de lead later herstellen.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={updateLead.isPending}
-              onClick={() => setDeleteTarget(null)}
-            >
-              Annuleren
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={updateLead.isPending}
-              onClick={() => {
-                if (!deleteTarget) return;
-                updateLead.mutate(
-                  { id: deleteTarget.id, patch: { deleted_at: new Date().toISOString() } },
-                  {
-                    onSuccess: () => {
-                      setDeleteTarget(null);
-                      setOpenLeadId(null);
-                      toast.success("Lead naar prullenbak verplaatst");
-                    },
-                  },
-                );
-              }}
-            >
-              Naar prullenbak
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function NewField({
+  label,
+  children,
+  required = false,
+  basis = "200px",
+}: {
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+  basis?: string;
+}) {
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
+    <label className="flex min-w-0 flex-1 flex-col gap-1.5" style={{ flexBasis: basis }}>
+      <span className="text-[12px] font-semibold text-body">
+        {label}
+        {required ? " *" : ""}
+      </span>
       {children}
-    </div>
-  );
-}
-
-function FilterSelect({
-  value,
-  onChange,
-  allLabel,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  allLabel: string;
-  options: readonly { value: string; label: string }[];
-}) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-44">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">{allLabel}</SelectItem>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-interface LeadRow {
-  website: string | null;
-  value_estimate: number | null;
-  id: string;
-  company: string;
-  contact_name: string | null;
-  job_title: string | null;
-  email: string | null;
-  phone: string | null;
-  linkedin_url: string | null;
-  city: string | null;
-  campaign: string | null;
-
-  source: string;
-  stage: string;
-  priority: number;
-
-  notes: string | null;
-  owner_id: string | null;
-  created_by: string | null;
-  last_touch_at: string | null;
-}
-
-function LeadDetail({
-  lead,
-  ownerName,
-  profiles,
-  canManage,
-  onPatch,
-}: {
-  lead: LeadRow;
-  ownerName: string;
-  profiles: { id: string; full_name: string | null; email: string | null }[];
-  canManage: boolean;
-  onPatch: (patch: LeadUpdate) => Promise<unknown>;
-}) {
-  const queryClient = useQueryClient();
-  const { data: me } = useCurrentUser();
-  const [channel, setChannel] = useState<Channel>("email");
-  const [notes, setNotes] = useState("");
-  const [stageComment, setStageComment] = useState("");
-
-  const { data: activities = [] } = useQuery({
-    queryKey: ["activities", lead.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("activities")
-        .select("*")
-        .eq("lead_id", lead.id)
-        .order("occurred_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const logActivity = useMutation({
-    mutationFn: async () => {
-      if (!me) throw new Error("Not signed in");
-      const { error } = await supabase.from("activities").insert({
-        lead_id: lead.id,
-        user_id: me.id,
-        channel,
-        direction: "outbound",
-        body: notes || null,
-      });
-      if (error) throw error;
-      const { error: touchError } = await supabase
-        .from("leads")
-        .update({ last_touch_at: new Date().toISOString() })
-        .eq("id", lead.id);
-      if (touchError)
-        throw new Error("Activity saved, but the last-contact date could not be updated.");
-    },
-    onSuccess: () => {
-      setNotes("");
-      toast.success("Outreach logged");
-      queryClient.invalidateQueries({ queryKey: ["activities", lead.id] });
-      queryClient.invalidateQueries({ queryKey: ["activities-recent"] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  const stagePrefix = `[${lead.stage}] `;
-  const stageComments = activities.filter(
-    (activity) => activity.channel === "note" && (activity.body ?? "").startsWith(stagePrefix),
-  );
-
-  const addStageComment = useMutation({
-    mutationFn: async () => {
-      if (!me) throw new Error("Not signed in");
-      const { error } = await supabase.from("activities").insert({
-        lead_id: lead.id,
-        user_id: me.id,
-        channel: "note",
-        direction: "outbound",
-        body: `${stagePrefix}${stageComment.trim()}`,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setStageComment("");
-      toast.success("Comment saved");
-      queryClient.invalidateQueries({ queryKey: ["activities", lead.id] });
-      queryClient.invalidateQueries({ queryKey: ["activities-recent"] });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  return (
-    <div className="space-y-5 pt-4">
-      <WebsiteRequest
-        notes={lead.notes}
-        source={lead.source}
-        requests={activities.filter(
-          (activity) => activity.direction === "inbound" && activity.channel === "note",
-        )}
-      />
-      <section className="space-y-2 rounded-xl border p-4" aria-label="Contact">
-        <p className="font-semibold">{lead.contact_name || lead.company}</p>
-        {lead.email && (
-          <a
-            className="block break-all text-sm text-primary hover:underline"
-            href={`mailto:${lead.email}`}
-          >
-            {lead.email}
-          </a>
-        )}
-        {lead.phone && (
-          <a
-            className="block text-sm text-primary hover:underline"
-            href={`tel:${lead.phone.replace(/[^+0-9]/g, "")}`}
-          >
-            {lead.phone}
-          </a>
-        )}
-        {lead.website && <p className="break-all text-sm text-muted-foreground">{lead.website}</p>}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-          <span className="text-sm">Fase</span>
-          <Select
-            value={lead.stage}
-            disabled={!canManage}
-            onValueChange={(stage) =>
-              void onPatch({ stage: stage as Stage }).catch(() => undefined)
-            }
-          >
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STAGES.map((stage) => (
-                <SelectItem key={stage.value} value={stage.value}>
-                  {stage.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
-      <details className="rounded-xl border p-4">
-        <summary className="cursor-pointer text-sm font-medium">Contactgegevens bewerken</summary>
-        <div className="pt-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Company">
-              <LeadTextField
-                label="Company"
-                required
-                value={lead.company}
-                onSave={(value) => onPatch({ company: value })}
-                disabled={!canManage}
-              />
-            </Field>
-            <Field label="Contact name">
-              <LeadTextField
-                label="Contact name"
-                value={lead.contact_name ?? ""}
-                onSave={(value) => onPatch({ contact_name: value || null })}
-                disabled={!canManage}
-              />
-            </Field>
-            <Field label="Job title">
-              <LeadTextField
-                label="Job title"
-                value={lead.job_title ?? ""}
-                onSave={(value) => onPatch({ job_title: value || null })}
-                disabled={!canManage}
-              />
-            </Field>
-            <Field label="Email">
-              <LeadTextField
-                label="Email"
-                value={lead.email ?? ""}
-                onSave={(value) => onPatch({ email: value || null })}
-                disabled={!canManage}
-              />
-            </Field>
-            <Field label="Phone">
-              <LeadTextField
-                label="Phone"
-                value={lead.phone ?? ""}
-                onSave={(value) => onPatch({ phone: value || null })}
-                disabled={!canManage}
-              />
-            </Field>
-            <Field label="City">
-              <LeadTextField
-                label="City"
-                value={lead.city ?? ""}
-                onSave={(value) => onPatch({ city: value || null })}
-                disabled={!canManage}
-              />
-            </Field>
-            <Field label="Campaign">
-              <LeadTextField
-                label="Campaign"
-                value={lead.campaign ?? ""}
-                onSave={(value) => onPatch({ campaign: value || null })}
-                disabled={!canManage}
-              />
-            </Field>
-            <div className="flex flex-col justify-end pb-1">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Last touch</p>
-              <p className="text-sm">{formatDate(lead.last_touch_at)}</p>
-            </div>
-          </div>
-
-          {lead.linkedin_url && (
-            <a
-              href={lead.linkedin_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-primary underline"
-            >
-              Open LinkedIn profile
-            </a>
-          )}
-        </div>
-      </details>
-      <details className="rounded-xl border p-4">
-        <summary className="cursor-pointer text-sm font-medium">Dealwaarde & documenten</summary>
-        <div className="space-y-4 pt-4">
-          <DealValueEditor
-            id={lead.id}
-            company={lead.company}
-            value={lead.value_estimate}
-            disabled={!canManage}
-          />
-          <LeadDocuments id={lead.id} />
-        </div>
-      </details>
-      <details className="rounded-xl border p-4">
-        <summary className="cursor-pointer text-sm font-medium">
-          Interne notities & opvolging
-        </summary>
-        <div className="space-y-5 pt-4">
-          <Field label="Notes">
-            <LeadTextField
-              label="Notes"
-              multiline
-              value={lead.notes ?? ""}
-              onSave={(value) => onPatch({ notes: value || null })}
-              disabled={!canManage}
-              placeholder="General notes about this account..."
-            />
-          </Field>
-
-          <div className="panel space-y-3 p-4">
-            <p className="font-display text-lg">Pipeline</p>
-            <PipelineTracker
-              stage={lead.stage}
-              canEdit={canManage}
-              onStageChange={(value) => void onPatch({ stage: value }).catch(() => undefined)}
-            />
-            {!canManage && (
-              <p className="text-xs text-muted-foreground">Sign in again to move this lead.</p>
-            )}
-
-            <div className="space-y-2 rounded-md border border-border bg-secondary/30 p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Comments on this step — {STAGE_META[lead.stage as Stage]?.short ?? lead.stage}
-              </p>
-              {stageComments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No comment on this step yet.</p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {stageComments.map((comment) => (
-                    <li key={comment.id} className="text-sm">
-                      <span className="text-muted-foreground">
-                        {formatDate(comment.occurred_at)} —{" "}
-                      </span>
-                      {comment.body}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Textarea
-                placeholder="Add a comment for this step..."
-                value={stageComment}
-                onChange={(e) => setStageComment(e.target.value)}
-                disabled={!canManage}
-              />
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={!canManage || !stageComment.trim() || addStageComment.isPending}
-                onClick={() => addStageComment.mutate()}
-              >
-                Save comment
-              </Button>
-            </div>
-          </div>
-
-          {canManage && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Importance">
-                <Select
-                  value={String(lead.priority)}
-                  onValueChange={(value) =>
-                    void onPatch({ priority: Number(value) }).catch(() => undefined)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 4, 3, 2, 1].map((p) => (
-                      <SelectItem key={p} value={String(p)}>
-                        {priorityLabel(p)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Owner">
-                <Select
-                  value={lead.owner_id ?? "none"}
-                  onValueChange={(value) =>
-                    void onPatch({ owner_id: value === "none" ? null : value }).catch(
-                      () => undefined,
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Unassigned</SelectItem>
-                    {profiles.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.full_name ?? p.email ?? "Team member"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-          )}
-
-          <div className="panel space-y-3 p-4">
-            <p className="font-display text-lg">Log outreach</p>
-            <Field label="Channel">
-              <Select value={channel} onValueChange={(value) => setChannel(value as Channel)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CHANNELS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Notes">
-              <Textarea
-                placeholder="What did you send or discuss?"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </Field>
-            <Button onClick={() => logActivity.mutate()} disabled={logActivity.isPending}>
-              Log it
-            </Button>
-          </div>
-        </div>
-      </details>
-      <details className="rounded-xl border p-4">
-        <summary className="cursor-pointer text-sm font-medium">
-          Geschiedenis ({activities.length})
-        </summary>
-        <div className="space-y-2 pt-4">
-          {activities.length === 0 && (
-            <p className="text-sm text-muted-foreground">No outreach logged for this lead yet.</p>
-          )}
-          {activities.map((activity) => (
-            <div key={activity.id} className="rounded-md border border-border p-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{labelFor(CHANNELS, activity.channel)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(activity.occurred_at)}
-                </span>
-              </div>
-              {activity.body && <p className="text-sm text-muted-foreground">{activity.body}</p>}
-            </div>
-          ))}
-        </div>
-      </details>
-    </div>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p>{value}</p>
-    </div>
+    </label>
   );
 }

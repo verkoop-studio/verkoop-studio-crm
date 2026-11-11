@@ -715,7 +715,7 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
   ],
   [/^(\d+) accounts? · (.+) open$/, (m) => `${m[1]} accounts · ${m[2]} open`],
   [
-    /^(\d+) leads?, every document and the whole outreach history go with it\. This cannot be undone\.$/,
+    /^(\d+) leads?, every document and the whole outreach history go with it\. This one cannot be undone\.$/,
     (m) =>
       `${m[1]} leads, elk document en de hele contacthistoriek gaan mee. Dit kan niet ongedaan gemaakt worden.`,
   ],

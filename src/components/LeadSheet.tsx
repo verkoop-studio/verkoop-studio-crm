@@ -120,11 +120,15 @@ export function LeadSheet({
   const touch = lastTouch(lead.last_touch_at ?? lead.created_at);
   const channel = channelMark(lead.source);
 
+  const dialog = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", escape);
+    // Opening a sheet should move the keyboard into it, not leave it behind
+    // on the row that opened it.
+    dialog.current?.focus();
     return () => document.removeEventListener("keydown", escape);
   }, [onClose]);
 
@@ -138,9 +142,12 @@ export function LeadSheet({
         style={{ background: "#0b0f1c4d" }}
       />
       <div
+        ref={dialog}
         role="dialog"
+        aria-modal="true"
         aria-label={lead.company}
-        className="relative flex h-full w-full max-w-[640px] flex-col overflow-hidden border-l border-border bg-panel shadow-sheet"
+        tabIndex={-1}
+        className="relative flex h-full w-full max-w-[640px] flex-col overflow-hidden border-l border-border bg-panel shadow-sheet outline-none"
       >
         {/* Head */}
         <div className="flex flex-col gap-3 border-b border-hairline px-[22px] pb-3.5 pt-[18px]">

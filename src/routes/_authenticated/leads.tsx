@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -752,6 +752,16 @@ function NewLead({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const { data: me } = useCurrentUser();
   const [form, setForm] = useState(EMPTY);
+  const dialog = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", escape);
+    dialog.current?.focus();
+    return () => document.removeEventListener("keydown", escape);
+  }, [onClose]);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -789,9 +799,12 @@ function NewLead({ onClose }: { onClose: () => void }) {
         style={{ background: "#0b0f1c4d" }}
       />
       <div
+        ref={dialog}
         role="dialog"
+        aria-modal="true"
         aria-label="New lead"
-        className="relative flex max-h-[85vh] w-full max-w-[520px] flex-col overflow-y-auto rounded-panel border border-border bg-panel p-[22px] shadow-dialog"
+        tabIndex={-1}
+        className="relative flex max-h-[85vh] w-full max-w-[520px] flex-col overflow-y-auto rounded-panel border border-border bg-panel p-[22px] shadow-dialog outline-none"
       >
         <h2 className="m-0 text-[20px] font-bold tracking-[-0.045em] text-ink-strong">New lead</h2>
         <p className="mb-4 mt-1 text-[13px] text-body-quiet">

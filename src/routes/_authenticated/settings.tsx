@@ -1057,7 +1057,7 @@ function RemoveCompanyRow({ companyName, isAdmin }: { companyName: string; isAdm
           <span className="text-[11px] text-body">
             {`${leads.length} ${
               leads.length === 1 ? "lead" : "leads"
-            }, every document and the whole outreach history go with it. This cannot be undone.`}
+            }, every document and the whole outreach history go with it. This one cannot be undone.`}
           </span>
         </span>
         <button

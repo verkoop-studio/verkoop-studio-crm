@@ -42,7 +42,8 @@ const KIND_ICON: Record<Channel | "stage", string> = {
   email: "M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm0 1 10 6 10-6",
   linkedin:
     "M4 9h4v11H4zM6 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4M11 20V9h4v1.6c.7-1 1.9-1.9 3.6-1.9 2.6 0 4.4 1.7 4.4 5V20h-4v-5.3c0-1.6-.7-2.6-2.1-2.6-1.2 0-1.9.8-2.2 1.6-.1.3-.1.7-.1 1.1V20z",
-  meeting: "M4 5.5h16a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1M3 10h18M8 3v4M16 3v4",
+  meeting:
+    "M4 5.5h16a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1M3 10h18M8 3v4M16 3v4",
   ads: "m3 11 18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6",
   note: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
   stage: "M5 12h13M13 6l6 6-6 6",
@@ -106,7 +107,9 @@ export function LeadSheet({
   const save = (update: LeadUpdate) => patch.mutateAsync(update);
 
   const nameOf = (id: string | null) =>
-    profiles.find((p) => p.id === id)?.full_name ?? profiles.find((p) => p.id === id)?.email ?? null;
+    profiles.find((p) => p.id === id)?.full_name ??
+    profiles.find((p) => p.id === id)?.email ??
+    null;
 
   const ownerName = nameOf(lead.owner_id);
   const touch = lastTouch(lead.last_touch_at ?? lead.created_at);
@@ -172,7 +175,13 @@ export function LeadSheet({
           <div className="flex flex-wrap items-center gap-2">
             <StageBadge stage={lead.stage} />
             <span className="inline-flex items-center gap-[7px] rounded-pill bg-warn-bg px-[11px] py-[5px] text-[12px] font-semibold text-warn">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8z" />
               </svg>
               {priorityLabel(lead.priority)}
@@ -181,13 +190,21 @@ export function LeadSheet({
               <OwnerAvatar id={lead.owner_id} name={ownerName} size={20} />
               {ownerName?.split(" ")[0] ?? "Nobody yet"}
             </span>
-            <span className="ml-auto text-[12px] text-caption">Last touch {touch.text.toLowerCase()}</span>
+            <span className="ml-auto text-[12px] text-caption">
+              Last touch {touch.text.toLowerCase()}
+            </span>
           </div>
         </div>
 
         {/* Body */}
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-[22px] pb-[22px] pt-4">
-          <ValueAndStage lead={lead} canEdit={canEdit} ownerName={ownerName} meId={me?.id ?? null} onSave={save} />
+          <ValueAndStage
+            lead={lead}
+            canEdit={canEdit}
+            ownerName={ownerName}
+            meId={me?.id ?? null}
+            onSave={save}
+          />
 
           <LogSomething lead={lead} canEdit={canEdit} />
 
@@ -608,9 +625,7 @@ function WhoTheyAre({
             basis={field.basis}
             canEdit={canEdit}
             options={field.options}
-            onSave={(next) =>
-              onSave({ [field.column]: next === "" ? null : next } as LeadUpdate)
-            }
+            onSave={(next) => onSave({ [field.column]: next === "" ? null : next } as LeadUpdate)}
           />
         ))}
       </div>

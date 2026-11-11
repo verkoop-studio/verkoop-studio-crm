@@ -94,8 +94,8 @@ function SettingsPage() {
               <path d="M12 9v4M12 17h.01" />
               <circle cx="12" cy="12" r="9" />
             </svg>
-            {pendingRequests.length}{" "}
-            {pendingRequests.length === 1 ? "person is" : "people are"} waiting for an account
+            {pendingRequests.length} {pendingRequests.length === 1 ? "person is" : "people are"}{" "}
+            waiting for an account
           </span>
         )}
       </div>
@@ -122,9 +122,9 @@ function SettingsPage() {
       </div>
 
       <span className="text-[11px] leading-[1.6] text-caption">
-        Team used to be its own page. It is one group in this list now, because a company with
-        three people does not need a second screen to manage them, and the app still redirects the
-        old link here.
+        Team used to be its own page. It is one group in this list now, because a company with three
+        people does not need a second screen to manage them, and the app still redirects the old
+        link here.
       </span>
     </div>
   );
@@ -284,10 +284,7 @@ document.getElementById('vs-lead').addEventListener('submit', async (event) => {
 
   return (
     <>
-      <Row
-        title="Website request form"
-        note="a form on your site that drops straight into New"
-      >
+      <Row title="Website request form" note="a form on your site that drops straight into New">
         <span className="flex flex-wrap items-center gap-2.5">
           <code className="rounded-[7px] bg-wash px-[11px] py-[7px] font-mono text-[12px] text-body">
             {endpoint || "…"}
@@ -616,9 +613,7 @@ function PendingRow({ requests }: { requests: PendingRequest[] }) {
       userId: string;
       yes: boolean;
     }) =>
-      yes
-        ? approve({ data: { requestId, userId } })
-        : decline({ data: { requestId, userId } }),
+      yes ? approve({ data: { requestId, userId } }) : decline({ data: { requestId, userId } }),
     onSuccess: (_result, variables) => {
       toast.success(variables.yes ? "Account approved" : "Account declined");
       queryClient.invalidateQueries({ queryKey: ["account-requests"] });
@@ -991,12 +986,7 @@ function ScopesRow() {
    * cannot honour. Making them real needs a grant-scope table the MCP tools
    * read; see the pull request.
    */
-  const allowed = [
-    "Read leads",
-    "Add and update leads",
-    "Log what happened",
-    "Open documents",
-  ];
+  const allowed = ["Read leads", "Add and update leads", "Log what happened", "Open documents"];
   return (
     <Row
       title="What they are allowed to do"

@@ -8,13 +8,7 @@ import { pipelineQueryKey, usePipelineLeads, type Lead } from "@/hooks/use-pipel
 import { LeadCategoryFilter } from "@/components/LeadCategories";
 import { matchesLeadCategory, type LeadCategoryFilterValue } from "@/lib/lead-categories";
 import { PIPELINE_STEPS, STAGE_META, type Stage } from "@/lib/sales";
-import {
-  ChannelGlyph,
-  OwnerAvatar,
-  Segmented,
-  euro,
-  lastTouch,
-} from "@/components/sales-ui";
+import { ChannelGlyph, OwnerAvatar, Segmented, euro, lastTouch } from "@/components/sales-ui";
 
 export const Route = createFileRoute("/_authenticated/prospectflow")({
   head: () => ({ meta: [{ title: "Prospect flow | Sales" }] }),
@@ -63,7 +57,9 @@ function ProspectFlow() {
     },
   });
   const nameOf = (id: string | null) =>
-    profiles.find((p) => p.id === id)?.full_name ?? profiles.find((p) => p.id === id)?.email ?? null;
+    profiles.find((p) => p.id === id)?.full_name ??
+    profiles.find((p) => p.id === id)?.email ??
+    null;
 
   const { data: all = [], isPending, isError, refetch } = usePipelineLeads();
   const scoped = all.filter((lead) => matchesLeadCategory(lead, category));
@@ -269,7 +265,11 @@ function ProspectFlow() {
                               {lead.contact_name ?? "No contact yet"}
                             </span>
                           </span>
-                          <span aria-hidden="true" className="shrink-0" style={{ color: "#c4cbe2" }}>
+                          <span
+                            aria-hidden="true"
+                            className="shrink-0"
+                            style={{ color: "#c4cbe2" }}
+                          >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                               <circle cx="9" cy="6" r="1.6" />
                               <circle cx="15" cy="6" r="1.6" />
@@ -293,15 +293,9 @@ function ProspectFlow() {
                               fontWeight: lead.value_estimate == null ? 400 : 600,
                             }}
                           >
-                            {lead.value_estimate == null
-                              ? "Not valued"
-                              : euro(lead.value_estimate)}
+                            {lead.value_estimate == null ? "Not valued" : euro(lead.value_estimate)}
                           </span>
-                          <OwnerAvatar
-                            id={lead.owner_id}
-                            name={nameOf(lead.owner_id)}
-                            size={22}
-                          />
+                          <OwnerAvatar id={lead.owner_id} name={nameOf(lead.owner_id)} size={22} />
                         </span>
 
                         <span

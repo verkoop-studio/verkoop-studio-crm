@@ -187,11 +187,7 @@ function Dashboard() {
 
       {/* The four numbers. One panel, hairlines instead of gaps. */}
       <Panel className="flex flex-wrap">
-        <Kpi
-          label="New this week"
-          value={String(thisWeek)}
-          note={`${lastWeek} last full week`}
-        />
+        <Kpi label="New this week" value={String(thisWeek)} note={`${lastWeek} last full week`} />
         <Kpi
           label="Open pipeline (estimated)"
           value={euro(pipeline)}
@@ -378,10 +374,7 @@ function Kpi({
   return (
     <div className="flex min-h-24 min-w-0 flex-[1_1_200px] flex-col gap-[5px] border-r border-hairline px-[18px] py-4 last:border-r-0">
       <span className="truncate text-[12px] text-body-quiet">{label}</span>
-      <span
-        className="text-[24px] font-bold tracking-[-0.045em] vsp-nums"
-        style={{ color: ink }}
-      >
+      <span className="text-[24px] font-bold tracking-[-0.045em] vsp-nums" style={{ color: ink }}>
         {value}
       </span>
       <span className="text-[11px] text-caption">{note}</span>

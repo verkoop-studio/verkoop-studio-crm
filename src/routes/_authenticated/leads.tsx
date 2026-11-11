@@ -88,12 +88,7 @@ function LeadsPage() {
   const [page, setPage] = useState(0);
   const [category, setCategory] = useState<LeadCategoryFilterValue>("all");
 
-  const {
-    data: everything = [],
-    isPending,
-    isError,
-    refetch,
-  } = usePipelineLeads(true);
+  const { data: everything = [], isPending, isError, refetch } = usePipelineLeads(true);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles"],
@@ -104,7 +99,9 @@ function LeadsPage() {
     },
   });
   const nameOf = (id: string | null) =>
-    profiles.find((p) => p.id === id)?.full_name ?? profiles.find((p) => p.id === id)?.email ?? null;
+    profiles.find((p) => p.id === id)?.full_name ??
+    profiles.find((p) => p.id === id)?.email ??
+    null;
 
   const inBin = search.bin === true;
   const stage = search.stage ?? "all";
@@ -551,9 +548,7 @@ function LeadsPage() {
                         className="text-[13px]"
                         style={{
                           color:
-                            lead.value_estimate == null
-                              ? "var(--vsp-disabled)"
-                              : "var(--vsp-ink)",
+                            lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
                           fontWeight: lead.value_estimate == null ? 400 : 600,
                         }}
                       >
@@ -621,7 +616,11 @@ function LeadsPage() {
 
               {isPending && (
                 <tr>
-                  <td colSpan={8} role="status" className="px-[18px] py-8 text-[13px] text-body-quiet">
+                  <td
+                    colSpan={8}
+                    role="status"
+                    className="px-[18px] py-8 text-[13px] text-body-quiet"
+                  >
                     Loading leads…
                   </td>
                 </tr>

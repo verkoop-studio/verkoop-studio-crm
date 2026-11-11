@@ -35,7 +35,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Sidebar"
         className="hidden w-[var(--vsp-sidebar-w)] shrink-0 flex-col gap-[26px] border-r border-border bg-panel px-4 pb-6 pt-7 md:flex"
       >
-        <Link to="/dashboard" aria-label="Verkoop Studio Sales" className="flex items-center gap-[11px] px-2">
+        <Link
+          to="/dashboard"
+          aria-label="Verkoop Studio Sales"
+          className="flex items-center gap-[11px] px-2"
+        >
           <Mark size={32} />
           <span className="text-[19px] font-semibold tracking-[-0.045em] text-ink">Sales</span>
         </Link>
@@ -306,7 +310,11 @@ function MobileChrome({ leadCount }: { leadCount: number | null }) {
         className="flex w-full items-center justify-between gap-3 border-b border-border bg-panel px-4 py-3 md:hidden"
         style={{ paddingTop: "max(.75rem, env(safe-area-inset-top))" }}
       >
-        <Link to="/dashboard" className="flex min-h-11 items-center gap-2.5" aria-label="Verkoop Studio Sales">
+        <Link
+          to="/dashboard"
+          className="flex min-h-11 items-center gap-2.5"
+          aria-label="Verkoop Studio Sales"
+        >
           <Mark size={28} />
           <span className="text-[17px] font-semibold tracking-[-0.045em] text-ink">Sales</span>
         </Link>

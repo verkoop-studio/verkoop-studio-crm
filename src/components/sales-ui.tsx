@@ -233,7 +233,13 @@ export function CompanyTile({
 
 /** €24.000 — the canvas writes euros with a dot and no decimals. */
 export function euro(value: number) {
-  return `€${Math.round(value).toLocaleString("nl-BE").replace(/ /g, ".")}`;
+  // Grouped by hand, so the separator is the dot the canvas uses and never an
+  // ICU-dependent space.
+  const rounded = Math.round(value);
+  const digits = Math.abs(rounded)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${rounded < 0 ? "-" : ""}\u20ac${digits}`;
 }
 
 /** €18,14 — the two places the canvas does show cents. */
@@ -319,9 +325,7 @@ export function PanelHead({
       }`}
     >
       <span className="text-[15px] font-semibold tracking-[-0.025em]">{title}</span>
-      {aside != null && (
-        <span className="ml-auto text-[12px] text-caption vsp-nums">{aside}</span>
-      )}
+      {aside != null && <span className="ml-auto text-[12px] text-caption vsp-nums">{aside}</span>}
     </div>
   );
 }

@@ -15,6 +15,8 @@ import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PendingRouteImport } from './routes/pending'
+import { Route as RequestAccessRouteImport } from './routes/request-access'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedConnectRouteImport } from './routes/_authenticated/connect'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -25,6 +27,12 @@ import { Route as AuthenticatedProspectflowRouteImport } from './routes/_authent
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as OauthConsentRouteImport } from './routes/oauth.consent'
+import { Route as OnboardingAboutRouteImport } from './routes/onboarding/about'
+import { Route as OnboardingAccountRouteImport } from './routes/onboarding/account'
+import { Route as OnboardingCheckoutRouteImport } from './routes/onboarding/checkout'
+import { Route as OnboardingCompanyRouteImport } from './routes/onboarding/company'
+import { Route as OnboardingTeamRouteImport } from './routes/onboarding/team'
+import { Route as OnboardingVideoRouteImport } from './routes/onboarding/video'
 import { Route as AuthenticatedCurrentConnectRouteImport } from './routes/_authenticated/current.connect'
 import { Route as ApiPublicInboundLeadRouteImport } from './routes/api/public/inbound-lead'
 import { Route as ApiIntegrationsCurrentExchangeRouteImport } from './routes/api/integrations/current/exchange'
@@ -57,6 +65,16 @@ const McpRoute = McpRouteImport.update({
 const PendingRoute = PendingRouteImport.update({
   id: '/pending',
   path: '/pending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequestAccessRoute = RequestAccessRouteImport.update({
+  id: '/request-access',
+  path: '/request-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -111,6 +129,36 @@ const OauthConsentRoute = OauthConsentRouteImport.update({
   path: '/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingAboutRoute = OnboardingAboutRouteImport.update({
+  id: '/onboarding/about',
+  path: '/onboarding/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingAccountRoute = OnboardingAccountRouteImport.update({
+  id: '/onboarding/account',
+  path: '/onboarding/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingCheckoutRoute = OnboardingCheckoutRouteImport.update({
+  id: '/onboarding/checkout',
+  path: '/onboarding/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingCompanyRoute = OnboardingCompanyRouteImport.update({
+  id: '/onboarding/company',
+  path: '/onboarding/company',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingTeamRoute = OnboardingTeamRouteImport.update({
+  id: '/onboarding/team',
+  path: '/onboarding/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingVideoRoute = OnboardingVideoRouteImport.update({
+  id: '/onboarding/video',
+  path: '/onboarding/video',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedCurrentConnectRoute =
   AuthenticatedCurrentConnectRouteImport.update({
     id: '/current/connect',
@@ -141,6 +189,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
+  '/request-access': typeof RequestAccessRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/connect': typeof AuthenticatedConnectRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -151,6 +201,12 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/oauth/consent': typeof OauthConsentRoute
+  '/onboarding/about': typeof OnboardingAboutRoute
+  '/onboarding/account': typeof OnboardingAccountRoute
+  '/onboarding/checkout': typeof OnboardingCheckoutRoute
+  '/onboarding/company': typeof OnboardingCompanyRoute
+  '/onboarding/team': typeof OnboardingTeamRoute
+  '/onboarding/video': typeof OnboardingVideoRoute
   '/current/connect': typeof AuthenticatedCurrentConnectRoute
   '/api/public/inbound-lead': typeof ApiPublicInboundLeadRoute
   '/api/integrations/current/exchange': typeof ApiIntegrationsCurrentExchangeRoute
@@ -162,6 +218,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
+  '/request-access': typeof RequestAccessRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/connect': typeof AuthenticatedConnectRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -172,6 +230,12 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/oauth/consent': typeof OauthConsentRoute
+  '/onboarding/about': typeof OnboardingAboutRoute
+  '/onboarding/account': typeof OnboardingAccountRoute
+  '/onboarding/checkout': typeof OnboardingCheckoutRoute
+  '/onboarding/company': typeof OnboardingCompanyRoute
+  '/onboarding/team': typeof OnboardingTeamRoute
+  '/onboarding/video': typeof OnboardingVideoRoute
   '/current/connect': typeof AuthenticatedCurrentConnectRoute
   '/api/public/inbound-lead': typeof ApiPublicInboundLeadRoute
   '/api/integrations/current/exchange': typeof ApiIntegrationsCurrentExchangeRoute
@@ -185,6 +249,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
+  '/request-access': typeof RequestAccessRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/connect': typeof AuthenticatedConnectRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -195,6 +261,12 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/oauth/consent': typeof OauthConsentRoute
+  '/onboarding/about': typeof OnboardingAboutRoute
+  '/onboarding/account': typeof OnboardingAccountRoute
+  '/onboarding/checkout': typeof OnboardingCheckoutRoute
+  '/onboarding/company': typeof OnboardingCompanyRoute
+  '/onboarding/team': typeof OnboardingTeamRoute
+  '/onboarding/video': typeof OnboardingVideoRoute
   '/_authenticated/current/connect': typeof AuthenticatedCurrentConnectRoute
   '/api/public/inbound-lead': typeof ApiPublicInboundLeadRoute
   '/api/integrations/current/exchange': typeof ApiIntegrationsCurrentExchangeRoute
@@ -208,6 +280,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/mcp'
     | '/pending'
+    | '/request-access'
+    | '/reset-password'
     | '/.well-known/oauth-protected-resource'
     | '/connect'
     | '/dashboard'
@@ -218,6 +292,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/oauth/consent'
+    | '/onboarding/about'
+    | '/onboarding/account'
+    | '/onboarding/checkout'
+    | '/onboarding/company'
+    | '/onboarding/team'
+    | '/onboarding/video'
     | '/current/connect'
     | '/api/public/inbound-lead'
     | '/api/integrations/current/exchange'
@@ -229,6 +309,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/mcp'
     | '/pending'
+    | '/request-access'
+    | '/reset-password'
     | '/.well-known/oauth-protected-resource'
     | '/connect'
     | '/dashboard'
@@ -239,6 +321,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/oauth/consent'
+    | '/onboarding/about'
+    | '/onboarding/account'
+    | '/onboarding/checkout'
+    | '/onboarding/company'
+    | '/onboarding/team'
+    | '/onboarding/video'
     | '/current/connect'
     | '/api/public/inbound-lead'
     | '/api/integrations/current/exchange'
@@ -251,6 +339,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/mcp'
     | '/pending'
+    | '/request-access'
+    | '/reset-password'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/connect'
     | '/_authenticated/dashboard'
@@ -261,6 +351,12 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/team'
     | '/oauth/consent'
+    | '/onboarding/about'
+    | '/onboarding/account'
+    | '/onboarding/checkout'
+    | '/onboarding/company'
+    | '/onboarding/team'
+    | '/onboarding/video'
     | '/_authenticated/current/connect'
     | '/api/public/inbound-lead'
     | '/api/integrations/current/exchange'
@@ -274,8 +370,16 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
   PendingRoute: typeof PendingRoute
+  RequestAccessRoute: typeof RequestAccessRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   OauthConsentRoute: typeof OauthConsentRoute
+  OnboardingAboutRoute: typeof OnboardingAboutRoute
+  OnboardingAccountRoute: typeof OnboardingAccountRoute
+  OnboardingCheckoutRoute: typeof OnboardingCheckoutRoute
+  OnboardingCompanyRoute: typeof OnboardingCompanyRoute
+  OnboardingTeamRoute: typeof OnboardingTeamRoute
+  OnboardingVideoRoute: typeof OnboardingVideoRoute
   ApiPublicInboundLeadRoute: typeof ApiPublicInboundLeadRoute
   ApiIntegrationsCurrentExchangeRoute: typeof ApiIntegrationsCurrentExchangeRoute
   ApiIntegrationsCurrentExportRoute: typeof ApiIntegrationsCurrentExportRoute
@@ -323,6 +427,20 @@ declare module '@tanstack/react-router' {
       path: '/pending'
       fullPath: '/pending'
       preLoaderRoute: typeof PendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/request-access': {
+      id: '/request-access'
+      path: '/request-access'
+      fullPath: '/request-access'
+      preLoaderRoute: typeof RequestAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {
@@ -395,6 +513,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/about': {
+      id: '/onboarding/about'
+      path: '/onboarding/about'
+      fullPath: '/onboarding/about'
+      preLoaderRoute: typeof OnboardingAboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/account': {
+      id: '/onboarding/account'
+      path: '/onboarding/account'
+      fullPath: '/onboarding/account'
+      preLoaderRoute: typeof OnboardingAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/checkout': {
+      id: '/onboarding/checkout'
+      path: '/onboarding/checkout'
+      fullPath: '/onboarding/checkout'
+      preLoaderRoute: typeof OnboardingCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/company': {
+      id: '/onboarding/company'
+      path: '/onboarding/company'
+      fullPath: '/onboarding/company'
+      preLoaderRoute: typeof OnboardingCompanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/team': {
+      id: '/onboarding/team'
+      path: '/onboarding/team'
+      fullPath: '/onboarding/team'
+      preLoaderRoute: typeof OnboardingTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/video': {
+      id: '/onboarding/video'
+      path: '/onboarding/video'
+      fullPath: '/onboarding/video'
+      preLoaderRoute: typeof OnboardingVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/current/connect': {
       id: '/_authenticated/current/connect'
       path: '/current/connect'
@@ -460,9 +620,17 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   McpRoute: McpRoute,
   PendingRoute: PendingRoute,
+  RequestAccessRoute: RequestAccessRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   OauthConsentRoute: OauthConsentRoute,
+  OnboardingAboutRoute: OnboardingAboutRoute,
+  OnboardingAccountRoute: OnboardingAccountRoute,
+  OnboardingCheckoutRoute: OnboardingCheckoutRoute,
+  OnboardingCompanyRoute: OnboardingCompanyRoute,
+  OnboardingTeamRoute: OnboardingTeamRoute,
+  OnboardingVideoRoute: OnboardingVideoRoute,
   ApiPublicInboundLeadRoute: ApiPublicInboundLeadRoute,
   ApiIntegrationsCurrentExchangeRoute: ApiIntegrationsCurrentExchangeRoute,
   ApiIntegrationsCurrentExportRoute: ApiIntegrationsCurrentExportRoute,

@@ -28,7 +28,11 @@ export function FirstRun() {
       const [members, imports, created] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }),
         supabase.from("import_batches").select("id", { count: "exact", head: true }),
-        supabase.from("companies").select("created_at").eq("id", companyId ?? "").maybeSingle(),
+        supabase
+          .from("companies")
+          .select("created_at")
+          .eq("id", companyId ?? "")
+          .maybeSingle(),
       ]);
       return {
         members: members.count ?? 1,
@@ -218,8 +222,8 @@ export function FirstRun() {
             Empty, which is exactly how it should look right now.
           </h2>
           <p className="m-0 text-[13px] leading-[1.6] text-dark-text">
-            Three things turn this into something you open every morning. The first one takes
-            thirty seconds.
+            Three things turn this into something you open every morning. The first one takes thirty
+            seconds.
           </p>
         </div>
         <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-[7px] p-4">
@@ -355,8 +359,8 @@ export function FirstRun() {
             </span>
             <span className="text-[13px] leading-[1.6] text-body-quiet">
               Typing one in is the fastest way to see how it works. Importing is the fastest way to
-              get your real work in here. The form is the one that keeps working after you close
-              the laptop.
+              get your real work in here. The form is the one that keeps working after you close the
+              laptop.
             </span>
             {draft.fillWith && (
               <span className="pt-1 text-[11px] text-caption">

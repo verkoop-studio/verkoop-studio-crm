@@ -77,9 +77,7 @@ export async function openLeadDocument(path: string) {
   const popup = window.open("about:blank", "_blank");
   if (popup) popup.opener = null;
   try {
-    const { data, error } = await supabase.storage
-      .from(DOCUMENT_BUCKET)
-      .createSignedUrl(path, 60);
+    const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).createSignedUrl(path, 60);
     if (error) throw error;
     if (!popup) return { ok: false as const, reason: "popup_blocked" as const };
     popup.location.replace(data.signedUrl);

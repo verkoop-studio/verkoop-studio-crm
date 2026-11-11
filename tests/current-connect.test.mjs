@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   CURRENT_CONNECT_CODE_KEY,
+  CURRENT_DASHBOARD_ORIGIN,
   createCurrentConnectCode,
   currentCallbackUrl,
   currentExchangeMethodNotAllowed,
@@ -122,6 +123,21 @@ test("Expired, malformed or unknown codes are refused and an expired code is use
   );
   assert.equal(off.status, 503);
   assert.equal(currentExchangeMethodNotAllowed().status, 405);
+});
+
+test("the dashboard hostname really is spelled 'perfomance', with one r", () => {
+  /*
+   * If you are reading this because you "corrected" the spelling and this
+   * failed: put it back. perfomance.verkoop.studio is the registered host and
+   * resolves; performance.verkoop.studio has no DNS record. This is where the
+   * single-use connect code is sent, so the misspelling is load-bearing.
+   * See the note on CURRENT_DASHBOARD_ORIGIN.
+   */
+  assert.equal(new URL(CURRENT_DASHBOARD_ORIGIN).hostname, "perfomance.verkoop.studio");
+  assert.ok(
+    !new URL(CURRENT_DASHBOARD_ORIGIN).hostname.includes("performance"),
+    "the hostname must not be the correctly spelled one: it does not exist",
+  );
 });
 
 test("Only Current's callback receives the code; states are 32 hex characters", () => {

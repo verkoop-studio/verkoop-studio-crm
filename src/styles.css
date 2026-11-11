@@ -325,6 +325,29 @@
     color: var(--vsp-accent-hover);
   }
 
+  /*
+   * Anything you can click says so under the pointer.
+   *
+   * Tailwind v4 dropped the `cursor: pointer` reset that v3 applied to
+   * buttons, and the browser default for <button> is `cursor: default`. So
+   * every button in this product — all sixty-one on the leads screen — looked
+   * like text to the pointer while every link looked clickable, which is the
+   * sort of thing you feel before you can name it.
+   */
+  button:not(:disabled),
+  select:not(:disabled),
+  summary,
+  label[for],
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+
   button:focus-visible,
   a:focus-visible,
   [role="button"]:focus-visible {

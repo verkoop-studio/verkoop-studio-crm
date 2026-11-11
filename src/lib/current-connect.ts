@@ -9,7 +9,20 @@ export const CURRENT_CONNECT_CODE_KEY = "current_connect_code";
 export const CURRENT_CONNECT_PATH = "/current/connect";
 export const CURRENT_EXCHANGE_PATH = "/api/integrations/current/exchange";
 export const CURRENT_CONNECT_CODE_SECONDS = 300;
-// Only Current's own callback ever receives a code.
+/*
+ * Only Current's own callback ever receives a code.
+ *
+ * "perfomance" is not a typo. That, missing the second r, is the hostname the
+ * marketing dashboard is actually registered and served on; the correctly
+ * spelled performance.verkoop.studio has no DNS record at all. Checked with
+ * `dig +short perfomance.verkoop.studio` (Cloudflare, the same pair of
+ * addresses crm.verkoop.studio resolves to) against `dig +short
+ * performance.verkoop.studio` (nothing). The dashboard's own repository spells
+ * it the same way in its crawler user-agent.
+ *
+ * So do not "fix" it. This is where the single-use connect code is sent, and
+ * correcting the spelling would send it to a host nobody owns.
+ */
 export const CURRENT_DASHBOARD_ORIGIN = "https://perfomance.verkoop.studio";
 const STATE_PATTERN = /^[a-f0-9]{32}$/;
 const CODE_PATTERN = /^[a-f0-9]{64}$/;

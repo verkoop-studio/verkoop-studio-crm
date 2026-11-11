@@ -450,7 +450,7 @@ function ImportPage() {
                               next[index] = event.target.value as ImportFieldKey | "";
                               remember(next);
                             }}
-                            className="min-h-[38px] w-full max-w-[230px] rounded-control border bg-panel px-[11px] text-[13px]"
+                            className="min-h-[38px] w-full max-w-[230px] rounded-control border bg-panel pl-[11px] pr-9 text-[13px]"
                             style={{
                               borderColor: required
                                 ? "var(--vsp-accent)"
@@ -494,7 +494,7 @@ function ImportPage() {
                   id="im-owner"
                   value={owner}
                   onChange={(event) => setOwner(event.target.value)}
-                  className="min-h-10 flex-[0_1_200px] rounded-control border border-border-control bg-panel px-3 text-[13px]"
+                  className="min-h-10 flex-[0_1_200px] rounded-control border border-border-control bg-panel pl-3 pr-9 text-[13px]"
                 >
                   <option value="split">Split across the team</option>
                   {members.map((member) => (
@@ -517,7 +517,7 @@ function ImportPage() {
                   id="im-stage"
                   value={stage}
                   onChange={(event) => setStage(event.target.value as Stage)}
-                  className="min-h-10 flex-[0_1_200px] rounded-control border border-border-control bg-panel px-3 text-[13px]"
+                  className="min-h-10 flex-[0_1_200px] rounded-control border border-border-control bg-panel pl-3 pr-9 text-[13px]"
                 >
                   {PIPELINE_STEPS.slice(0, 2).map((step) => (
                     <option key={step} value={step}>

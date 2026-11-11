@@ -8,6 +8,7 @@ import {
   documentSize,
   documentTitle,
   listLeadDocuments,
+  listLeadsWithDocuments,
   openLeadDocument,
 } from "@/lib/lead-documents";
 import { STAGE_META, type Stage } from "@/lib/sales";
@@ -62,20 +63,37 @@ function DocumentsPage() {
     queryKey: ["document-library", ids],
     queryFn: async () => {
       // Keep a few storage requests in flight at once, but still cover every lead.
+      // Ask once which leads have a folder at all, then only read those.
+      const withFiles = new Set(await listLeadsWithDocuments());
+      const wanted = ids.filter((id) => withFiles.has(id));
       const results: { id: string; documents: Awaited<ReturnType<typeof listLeadDocuments>> }[] =
         [];
       let next = 0;
       await Promise.all(
-        Array.from({ length: Math.min(4, ids.length) }, async () => {
-          while (next < ids.length) {
-            const id = ids[next++];
+        Array.from({ length: Math.min(4, wanted.length) }, async () => {
+          while (next < wanted.length) {
+            const id = wanted[next++];
             if (id) results.push({ id, documents: await listLeadDocuments(id) });
           }
         }),
       );
       return results;
     },
-    refetchInterval: 30_000,
+    /*
+     * No polling here, deliberately.
+     *
+     * There is no single "list the documents" call: the bucket is read one
+     * folder at a time, and listLeadDocuments asks for two per lead (quotes
+     * and contracts). At 184 leads that is 368 storage requests, and on a
+     * thirty-second timer it was 368 requests every thirty seconds for as
+     * long as the tab stayed open — enough to keep the browser busy and make
+     * everything else on the page feel sticky.
+     *
+     * Nothing here changes on its own. Uploading a file invalidates this key
+     * from the lead sheet, which is the only way a document appears, so the
+     * page is still correct the moment it matters.
+     */
+    staleTime: 5 * 60_000,
   });
 
   /*

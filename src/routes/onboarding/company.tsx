@@ -143,7 +143,7 @@ function Company() {
               id="oc-country"
               value={country}
               onChange={(event) => setCountry(event.target.value)}
-              className="min-h-11 flex-[0_1_260px] rounded-control border border-border-control bg-panel px-[13px] text-[14px] text-ink"
+              className="min-h-11 flex-[0_1_260px] rounded-control border border-border-control bg-panel pl-[13px] pr-9 text-[14px] text-ink"
             >
               {COUNTRIES.map((option) => (
                 <option key={option} value={option}>

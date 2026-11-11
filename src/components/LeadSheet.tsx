@@ -729,7 +729,7 @@ function EditableCell({
             void onSave(e.target.value);
             setEditing(false);
           }}
-          className="rounded-chip border border-border-control bg-panel px-2 py-1 text-[13px]"
+          className="rounded-chip border border-border-control bg-panel px-2 py-1 pr-7 text-[13px]"
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -917,7 +917,7 @@ function Paperwork({ lead, canEdit }: { lead: Lead; canEdit: boolean }) {
           aria-label="What kind of document"
           value={kind}
           onChange={(e) => setKind(e.target.value as DocumentKind)}
-          className="min-h-10 rounded-control border border-border-control bg-panel px-3 text-[13px]"
+          className="min-h-10 rounded-control border border-border-control bg-panel pl-3 pr-9 text-[13px]"
         >
           <option value="quote">Quote</option>
           <option value="contract">Contract</option>

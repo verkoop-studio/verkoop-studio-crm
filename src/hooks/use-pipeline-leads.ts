@@ -22,6 +22,12 @@ export function usePipelineLeads(includeDeleted = false) {
         if (data.length < 500) return rows;
       }
     },
-    refetchInterval: 30_000,
+    /*
+     * Every screen in the product reads this one query, so it is the thing
+     * most worth not re-fetching on sight. The dashboard's "Refreshed N min
+     * ago" button is the deliberate way to pull again.
+     */
+    refetchInterval: 60_000,
+    placeholderData: (previous) => previous,
   });
 }

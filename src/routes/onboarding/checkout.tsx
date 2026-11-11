@@ -378,7 +378,7 @@ function Checkout() {
                     <label htmlFor="ck-bank" className={label}>
                       Your bank
                     </label>
-                    <select id="ck-bank" className={field} defaultValue="">
+                    <select id="ck-bank" className={`${field} pr-9`} defaultValue="">
                       <option value="">Choose your bank</option>
                       <option>KBC</option>
                       <option>BNP Paribas Fortis</option>
@@ -477,7 +477,7 @@ function Checkout() {
                       autoComplete="country"
                       value={address.country}
                       onChange={(event) => setAddress({ ...address, country: event.target.value })}
-                      className={field}
+                      className={`${field} pr-9`}
                     >
                       {["Belgium", "Netherlands", "France", "Germany", "Luxembourg"].map(
                         (option) => (

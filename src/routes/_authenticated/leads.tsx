@@ -251,6 +251,13 @@ function LeadsPage() {
 
   return (
     <div className="flex flex-col gap-3.5">
+      {/*
+       * The canvas gives this screen no visible title — it opens straight on
+       * its controls — but a page still needs a heading to be navigable by
+       * anything other than sight. Hidden, so the drawing is unchanged and
+       * the document still has a top to it.
+       */}
+      <h1 className="sr-only">Leads</h1>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="relative flex min-w-[180px] flex-[0_1_280px]">
@@ -292,7 +299,7 @@ function LeadsPage() {
           id="lead-owner"
           value={owner}
           onChange={(e) => setSearch({ owner: e.target.value })}
-          className="min-h-10 rounded-control border border-border bg-panel px-[13px] text-[13px] font-medium text-body"
+          className="min-h-10 rounded-control border border-border bg-panel pl-[13px] pr-9 text-[13px] font-medium text-body"
         >
           <option value="all">Owner: everyone</option>
           <option value="mine">Owner: me</option>
@@ -316,7 +323,7 @@ function LeadsPage() {
             setChannel(e.target.value);
             setPage(0);
           }}
-          className="min-h-10 rounded-control border border-border bg-panel px-[13px] text-[13px] font-medium text-body"
+          className="min-h-10 rounded-control border border-border bg-panel pl-[13px] pr-9 text-[13px] font-medium text-body"
         >
           <option value="all">All channels</option>
           {SOURCES.map((source) => (
@@ -425,7 +432,7 @@ function LeadsPage() {
               value=""
               disabled={bulk.isPending}
               onChange={(e) => e.target.value && bulk.mutate({ stage: e.target.value as Stage })}
-              className="rounded-[7px] border border-accent-tint-line bg-panel px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+              className="rounded-[7px] border border-accent-tint-line bg-panel pl-3 pr-9 py-[7px] text-[12px] font-semibold text-accent-ink"
             >
               <option value="">Move stage</option>
               {STAGES.map((option) => (
@@ -445,7 +452,7 @@ function LeadsPage() {
                 e.target.value &&
                 bulk.mutate({ owner_id: e.target.value === "none" ? null : e.target.value })
               }
-              className="rounded-[7px] border border-accent-tint-line bg-panel px-3 py-[7px] text-[12px] font-semibold text-accent-ink"
+              className="rounded-[7px] border border-accent-tint-line bg-panel pl-3 pr-9 py-[7px] text-[12px] font-semibold text-accent-ink"
             >
               <option value="">Assign owner</option>
               <option value="none">Nobody</option>
@@ -527,7 +534,7 @@ function LeadsPage() {
                   <span
                     className="text-[13px] vsp-nums"
                     style={{
-                      color: lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                      color: lead.value_estimate == null ? "var(--vsp-caption)" : "var(--vsp-ink)",
                       fontWeight: lead.value_estimate == null ? 400 : 600,
                     }}
                   >
@@ -664,7 +671,7 @@ function LeadsPage() {
                         className="text-[13px]"
                         style={{
                           color:
-                            lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                            lead.value_estimate == null ? "var(--vsp-caption)" : "var(--vsp-ink)",
                           fontWeight: lead.value_estimate == null ? 400 : 600,
                         }}
                       >
@@ -1024,7 +1031,7 @@ function NewLead({ onClose }: { onClose: () => void }) {
               <select
                 value={form.source}
                 onChange={(e) => setForm({ ...form, source: e.target.value as Source })}
-                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel pl-3 pr-9 text-[14px]"
               >
                 {SOURCES.map((source) => (
                   <option key={source.value} value={source.value}>
@@ -1037,7 +1044,7 @@ function NewLead({ onClose }: { onClose: () => void }) {
               <select
                 value={form.stage}
                 onChange={(e) => setForm({ ...form, stage: e.target.value as Stage })}
-                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel px-3 text-[14px]"
+                className="min-h-[42px] w-full rounded-control border border-border-control bg-panel pl-3 pr-9 text-[14px]"
               >
                 {PIPELINE_STEPS.map((step) => (
                   <option key={step} value={step}>

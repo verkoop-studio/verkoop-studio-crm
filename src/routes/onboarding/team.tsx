@@ -111,7 +111,7 @@ function Team() {
                 id={`inv-${index}-role`}
                 value={person.role}
                 onChange={(event) => patch(index, { role: event.target.value as Invite["role"] })}
-                className="min-h-11 flex-[0_1_170px] rounded-control border border-border-control bg-panel px-[13px] text-[14px] text-ink"
+                className="min-h-11 flex-[0_1_170px] rounded-control border border-border-control bg-panel pl-[13px] pr-9 text-[14px] text-ink"
               >
                 {ROLES.map((role) => (
                   <option key={role.value} value={role.value}>

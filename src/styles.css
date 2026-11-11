@@ -40,8 +40,20 @@
   --vsp-ink-strong: #0d1019; /* the figure itself */
   --vsp-text: #505465; /* body */
   --vsp-text-quiet: #676d7e; /* secondary body */
-  --vsp-caption: #879099; /* 11px captions, empty cells */
-  --vsp-disabled: #a6abbb; /* a value that is not there, a control that is off */
+  /*
+   * #879099, the canvas's caption grey, reads at 3.24:1 on white and 2.98:1
+   * on the page — against the 4.5:1 small text needs. It is the most-used
+   * colour in the product (around 195 pieces of text), so that is a lot of
+   * writing a good number of people cannot comfortably read.
+   *
+   * #696f81 is the lightest grey that clears 4.5:1 on *every* surface here —
+   * white, the panel, the page, the sunken rows and the amber notices, worst
+   * case 4.60 — so captions stay a lighter step than body text rather than
+   * collapsing into it. Darkening further would have bought nothing but a
+   * flatter hierarchy.
+   */
+  --vsp-caption: #696f81; /* 11px captions, empty cells */
+  --vsp-disabled: #a6abbb; /* a control that is off. NOT a value that is absent */
 
   /* Accent · chrome only */
   --vsp-accent: #254bfa;
@@ -325,6 +337,29 @@
     color: var(--vsp-accent-hover);
   }
 
+  /*
+   * Anything you can click says so under the pointer.
+   *
+   * Tailwind v4 dropped the `cursor: pointer` reset that v3 applied to
+   * buttons, and the browser default for <button> is `cursor: default`. So
+   * every button in this product — all sixty-one on the leads screen — looked
+   * like text to the pointer while every link looked clickable, which is the
+   * sort of thing you feel before you can name it.
+   */
+  button:not(:disabled),
+  select:not(:disabled),
+  summary,
+  label[for],
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+
   button:focus-visible,
   a:focus-visible,
   [role="button"]:focus-visible {
@@ -365,6 +400,17 @@
 .vsp-tr:hover .vsp-act,
 .vsp-tr:focus-within .vsp-act {
   opacity: 1;
+}
+/*
+ * On a screen with no pointer there is no hover to reveal them with, so the
+ * row actions would simply never appear. Show them. (The same reasoning as
+ * the Open label on a document row, which is hidden instead — there the whole
+ * row is the button, here these are the only way to reach the action.)
+ */
+@media (hover: none) {
+  .vsp-act {
+    opacity: 1;
+  }
 }
 
 /* The pencil on an editable field, and the Open link on a document row. */
@@ -592,6 +638,14 @@
   select {
     font-size: 16px !important;
   }
+  /*
+   * Links too. Half the controls in this product are links — "Back to the
+   * dashboard", a company's row of paperwork — and they were exempt from the
+   * floor, so they came out at 18 to 39 pixels on a phone. min-height does
+   * nothing to an inline box, so a link inside a sentence is left alone and
+   * only the ones laid out as blocks grow to a size a thumb can land on.
+   */
+  a,
   button,
   select,
   [role="combobox"],

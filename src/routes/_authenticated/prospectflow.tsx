@@ -295,7 +295,7 @@ function ProspectFlow() {
                             style={{
                               color:
                                 lead.value_estimate == null
-                                  ? "var(--vsp-disabled)"
+                                  ? "var(--vsp-caption)"
                                   : "var(--vsp-ink)",
                               fontWeight: lead.value_estimate == null ? 400 : 600,
                             }}
@@ -394,7 +394,10 @@ function ProspectFlow() {
             </strong>
           </span>
         </span>
-        <Link to="/dashboard" className="ml-auto text-[12px] font-semibold no-underline">
+        <Link
+          to="/dashboard"
+          className="ml-auto inline-flex items-center text-[12px] font-semibold no-underline"
+        >
           Back to the dashboard
         </Link>
       </div>

@@ -628,6 +628,54 @@ const secondLeads = SECOND.map((row, i) => ({
   last_touch_at: row.touch == null ? null : new Date(now.getTime() - row.touch * DAY),
 }));
 
+/* ---- the bin ----------------------------------------------------------
+ *
+ * Two leads somebody dropped. They are deliberately NOT part of the 184: a
+ * soft-deleted lead is left out of the sidebar badge, the stage tabs and
+ * every figure on the dashboard, so the boards' numbers still hold with these
+ * in the database. Without them the bin, and the "the bin holds 2" link under
+ * the table, are states nobody can reach.
+ */
+const BINNED = [
+  {
+    company: "Tuinhuis Waasland",
+    contact: "Ilse Goossens",
+    stage: "lost",
+    value: null,
+    age: 80,
+    dropped: 21,
+  },
+  {
+    company: "Raamdecoratie Pauwels",
+    contact: "Geert Pauwels",
+    stage: "new",
+    value: 4_500,
+    age: 34,
+    dropped: 5,
+  },
+];
+const binned = BINNED.map((row, i) => ({
+  id: `dead${String(2000 + i)}-0000-4000-8000-000000000001`,
+  company_id: CO.main,
+  company: row.company,
+  contact_name: row.contact,
+  job_title: pick(JOB),
+  email: `${slug(row.contact.split(" ")[0])}@${slug(row.company)}.test`,
+  phone: null,
+  website: `${slug(row.company)}.test`,
+  city: pick(CITY),
+  country: "Belgium",
+  campaign: pick(CAMPAIGN),
+  source: pick(SOURCES),
+  priority: between(1, 3),
+  stage: row.stage,
+  owner_id: U.tanguy,
+  value_estimate: row.value,
+  created_at: new Date(now.getTime() - row.age * DAY),
+  last_touch_at: new Date(now.getTime() - row.dropped * DAY),
+  deleted_at: new Date(now.getTime() - row.dropped * DAY),
+}));
+
 /* ------------------------------------------------------------- checking
  *
  * The point of the whole file. If a change here stops matching the boards,
@@ -795,7 +843,7 @@ for (const [company, user, role] of ROLES) {
   );
 }
 w("");
-w(`-- ${main.length + secondLeads.length} leads.`);
+w(`-- ${main.length + secondLeads.length} leads, plus ${binned.length} in the bin.`);
 const COLUMNS = [
   "id",
   "company_id",
@@ -816,8 +864,9 @@ const COLUMNS = [
   "created_by",
   "created_at",
   "last_touch_at",
+  "deleted_at",
 ];
-const rows = [...main, ...secondLeads].map(
+const rows = [...main, ...secondLeads, ...binned].map(
   (lead) =>
     `  (${COLUMNS.map((c) => {
       if (c === "created_by") return q(U.tanguy);

@@ -231,7 +231,7 @@ function LanguageRow() {
         id="st-lang"
         value={language}
         onChange={(event) => setLanguage(event.target.value as "nl" | "en")}
-        className={`${control} flex-[0_1_260px]`}
+        className={`${control} flex-[0_1_260px] pr-9`}
       >
         <option value="nl">Nederlands</option>
         <option value="en">English</option>
@@ -459,7 +459,7 @@ function PeopleRows({ isAdmin, meId }: { isAdmin: boolean; meId: string | null }
       return data;
     },
   });
-  const { data: leads = [] } = usePipelineLeads();
+  const { data: leads = [], isPending: leadsPending } = usePipelineLeads();
 
   const members = useMemo(
     () =>
@@ -527,10 +527,17 @@ function PeopleRows({ isAdmin, meId }: { isAdmin: boolean; meId: string | null }
                 {member.email}
               </span>
             </span>
+            {/*
+             * Until the leads are in, nobody owns anything as far as this
+             * component knows, and "0 accounts" beside a colleague's name is
+             * a statement rather than a placeholder.
+             */}
             <span className="text-[12px] text-body-quiet vsp-nums">
-              {`${member.owned} ${member.owned === 1 ? "account" : "accounts"}${
-                member.open > 0 ? ` · ${euro(member.value)} open` : ""
-              }`}
+              {leadsPending
+                ? "counting…"
+                : `${member.owned} ${member.owned === 1 ? "account" : "accounts"}${
+                    member.open > 0 ? ` · ${euro(member.value)} open` : ""
+                  }`}
             </span>
             <label htmlFor={`role-${member.id}`} className="sr-only">
               Role for {name}
@@ -540,7 +547,7 @@ function PeopleRows({ isAdmin, meId }: { isAdmin: boolean; meId: string | null }
               value={member.role}
               disabled={!isAdmin || you || setRole.isPending}
               onChange={(e) => setRole.mutate({ userId: member.id, role: e.target.value as Role })}
-              className={`${control} min-h-[38px] flex-[0_1_170px]`}
+              className={`${control} min-h-[38px] flex-[0_1_170px] pr-9`}
             >
               {ROLES.map((role) => (
                 <option key={role.value} value={role.value}>
@@ -826,7 +833,7 @@ function InviteRow() {
             id="st-invite-role"
             value={role}
             onChange={(e) => setRole(e.target.value as Role)}
-            className={`${control} flex-[0_1_140px]`}
+            className={`${control} flex-[0_1_140px] pr-9`}
           >
             {ROLES.map((option) => (
               <option key={option.value} value={option.value}>

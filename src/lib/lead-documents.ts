@@ -14,6 +14,29 @@ const MIME: Record<string, string> = {
   jpeg: "image/jpeg",
 };
 
+/**
+ * The lead ids that have a folder in the bucket — that is, the only leads that
+ * can possibly have paperwork.
+ *
+ * Without this, the library screen asks the storage API for two folders per
+ * lead (quotes and contracts) whether or not that lead has ever had a file:
+ * 368 requests to discover that 24 leads have documents and 160 do not. One
+ * listing of the bucket root answers that question first, so the per-lead
+ * calls are only made where there is something to find.
+ */
+export async function listLeadsWithDocuments() {
+  const ids: string[] = [];
+  for (let offset = 0; ; offset += 100) {
+    const { data, error } = await supabase.storage
+      .from(DOCUMENT_BUCKET)
+      .list("", { limit: 100, offset });
+    if (error) throw error;
+    // A folder comes back with no id; a stray file at the root would have one.
+    ids.push(...data.filter((row) => !row.id).map((row) => row.name));
+    if (data.length < 100) return ids;
+  }
+}
+
 export async function listLeadDocuments(id: string) {
   const groups = await Promise.all(
     (["quote", "contract"] as const).map(async (category) => {

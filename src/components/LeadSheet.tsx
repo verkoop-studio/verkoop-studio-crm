@@ -126,10 +126,36 @@ export function LeadSheet({
       if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", escape);
+
+    /*
+     * Where the keyboard was before this opened, so it can be put back.
+     *
+     * Without this, closing the sheet dropped focus on <body>: open a lead,
+     * read it, press Escape, and you are back at the very top of the document
+     * with the whole sidebar and table to tab through again before you reach
+     * the next row. Returning it to the control that opened the sheet is what
+     * makes reading three leads in a row bearable without a mouse.
+     */
+    const opener = document.activeElement as HTMLElement | null;
+
+    // The list behind must not scroll under the sheet, which it otherwise does
+    // — most obviously on a phone, where the sheet covers the whole screen and
+    // a flick moves the page underneath it instead.
+    // The scrolling box is <html>, not <body>, so hiding the overflow on the
+    // body alone changes nothing: the page kept moving under the sheet.
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    root.style.overflow = "hidden";
+
     // Opening a sheet should move the keyboard into it, not leave it behind
     // on the row that opened it.
     dialog.current?.focus();
-    return () => document.removeEventListener("keydown", escape);
+
+    return () => {
+      document.removeEventListener("keydown", escape);
+      root.style.overflow = previousOverflow;
+      if (opener?.isConnected) opener.focus();
+    };
   }, [onClose]);
 
   return (
@@ -393,7 +419,7 @@ function ValueAndStage({
             <span
               className="text-[26px] font-bold tracking-[-0.045em] vsp-nums"
               style={{
-                color: lead.value_estimate == null ? "var(--vsp-disabled)" : "var(--vsp-ink)",
+                color: lead.value_estimate == null ? "var(--vsp-caption)" : "var(--vsp-ink)",
               }}
             >
               {lead.value_estimate == null ? "Not valued" : euro(lead.value_estimate)}
@@ -729,7 +755,7 @@ function EditableCell({
             void onSave(e.target.value);
             setEditing(false);
           }}
-          className="rounded-chip border border-border-control bg-panel px-2 py-1 text-[13px]"
+          className="rounded-chip border border-border-control bg-panel px-2 py-1 pr-7 text-[13px]"
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -917,7 +943,7 @@ function Paperwork({ lead, canEdit }: { lead: Lead; canEdit: boolean }) {
           aria-label="What kind of document"
           value={kind}
           onChange={(e) => setKind(e.target.value as DocumentKind)}
-          className="min-h-10 rounded-control border border-border-control bg-panel px-3 text-[13px]"
+          className="min-h-10 rounded-control border border-border-control bg-panel pl-3 pr-9 text-[13px]"
         >
           <option value="quote">Quote</option>
           <option value="contract">Contract</option>

@@ -755,7 +755,7 @@ function EditableCell({
             void onSave(e.target.value);
             setEditing(false);
           }}
-          className="rounded-chip border border-border-control bg-panel px-2 py-1 pr-7 text-[13px]"
+          className="rounded-chip border border-border-control bg-panel px-2 py-1 pr-9 text-[13px]"
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>

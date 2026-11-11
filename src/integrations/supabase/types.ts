@@ -353,6 +353,7 @@ export type Database = {
         }[];
       };
       create_crm_company: { Args: { _name: string }; Returns: string };
+      rename_crm_company: { Args: { _name: string }; Returns: string };
       invite_company_member: {
         Args: {
           _email: string;

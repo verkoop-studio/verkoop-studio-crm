@@ -117,12 +117,28 @@ export function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString("nl-BE", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+/** Which character separates the fields, so the file card can say so. */
+export function detectDelimiter(text: string): ";" | "," | "\t" {
+  const firstLine = text.replace(/^\uFEFF/, "").split(/\r\n?|\n/)[0] ?? "";
+  const counts = {
+    ";": firstLine.match(/;/g)?.length ?? 0,
+    ",": firstLine.match(/,/g)?.length ?? 0,
+    "\t": firstLine.match(/\t/g)?.length ?? 0,
+  } as const;
+  if (counts["\t"] > counts[";"] && counts["\t"] > counts[","]) return "\t";
+  return counts[";"] > counts[","] ? ";" : ",";
+}
+
+export const DELIMITER_NAME: Record<string, string> = {
+  ";": "semicolons",
+  ",": "commas",
+  "\t": "tabs",
+};
+
 /** Minimal RFC-4180-ish CSV parser (handles quotes, commas and semicolons). */
 export function parseCsv(text: string): string[][] {
   const clean = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
-  const firstLine = clean.split("\n")[0] ?? "";
-  const delimiter =
-    (firstLine.match(/;/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0) ? ";" : ",";
+  const delimiter = detectDelimiter(clean);
 
   const rows: string[][] = [];
   let row: string[] = [];
@@ -194,6 +210,19 @@ const HEADER_HINTS: Record<ImportFieldKey, string[]> = {
   campaign: ["campaign", "campagne", "list", "ad set", "adset"],
   notes: ["notes", "note", "comment", "opmerking"],
 };
+
+/**
+ * The canvas maps the other way round: one row per column in the file, each
+ * saying which field it goes into. Returns a field key per column, or "" for
+ * "Leave it out", and never gives the same field to two columns.
+ */
+export function guessColumnMapping(headers: string[]): (ImportFieldKey | "")[] {
+  const byField = guessMapping(headers);
+  return headers.map((header) => {
+    const field = IMPORT_FIELDS.find((item) => byField[item.key] === header);
+    return field ? field.key : "";
+  });
+}
 
 export function guessMapping(headers: string[]): Record<ImportFieldKey, string> {
   const mapping = {} as Record<ImportFieldKey, string>;

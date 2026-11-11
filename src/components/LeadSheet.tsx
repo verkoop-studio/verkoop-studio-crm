@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useModal } from "@/hooks/use-modal";
 import type { Lead } from "@/hooks/use-pipeline-leads";
 import {
   CHANNELS,
@@ -121,42 +122,7 @@ export function LeadSheet({
   const channel = channelMark(lead.source);
 
   const dialog = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", escape);
-
-    /*
-     * Where the keyboard was before this opened, so it can be put back.
-     *
-     * Without this, closing the sheet dropped focus on <body>: open a lead,
-     * read it, press Escape, and you are back at the very top of the document
-     * with the whole sidebar and table to tab through again before you reach
-     * the next row. Returning it to the control that opened the sheet is what
-     * makes reading three leads in a row bearable without a mouse.
-     */
-    const opener = document.activeElement as HTMLElement | null;
-
-    // The list behind must not scroll under the sheet, which it otherwise does
-    // — most obviously on a phone, where the sheet covers the whole screen and
-    // a flick moves the page underneath it instead.
-    // The scrolling box is <html>, not <body>, so hiding the overflow on the
-    // body alone changes nothing: the page kept moving under the sheet.
-    const root = document.documentElement;
-    const previousOverflow = root.style.overflow;
-    root.style.overflow = "hidden";
-
-    // Opening a sheet should move the keyboard into it, not leave it behind
-    // on the row that opened it.
-    dialog.current?.focus();
-
-    return () => {
-      document.removeEventListener("keydown", escape);
-      root.style.overflow = previousOverflow;
-      if (opener?.isConnected) opener.focus();
-    };
-  }, [onClose]);
+  useModal(dialog, onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

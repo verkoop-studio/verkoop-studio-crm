@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useModal } from "@/hooks/use-modal";
 import { usePipelineLeads } from "@/hooks/use-pipeline-leads";
 import { LeadSheet } from "@/components/LeadSheet";
 import { LeadCategoryFilter } from "@/components/LeadCategories";
@@ -859,9 +860,7 @@ function NothingHere({
   return (
     <span className="flex flex-wrap items-center justify-center gap-2 text-[13px] text-body-quiet">
       {reason === "search" ? (
-        <span>
-          Nothing matches <span className="font-semibold text-ink">{term}</span>.
-        </span>
+        <span>{`Nothing matches ${term}.`}</span>
       ) : (
         <span>Nothing matches these filters.</span>
       )}
@@ -912,14 +911,7 @@ function NewLead({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState(EMPTY);
   const dialog = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", escape);
-    dialog.current?.focus();
-    return () => document.removeEventListener("keydown", escape);
-  }, [onClose]);
+  useModal(dialog, onClose);
 
   const create = useMutation({
     mutationFn: async () => {

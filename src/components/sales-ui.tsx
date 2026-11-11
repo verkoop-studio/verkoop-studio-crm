@@ -171,6 +171,43 @@ export function ownerSkin(id: string | null) {
  * half the names in this country — anything carrying a De, Van, Van den or
  * Vander comes out keyed to the family name's tail instead of its start.
  */
+/**
+ * A refresh failed, but we still have the last good data on screen.
+ *
+ * Replacing a working dashboard with an error page because one background
+ * refresh failed costs the reader everything they were looking at in exchange
+ * for news they can do nothing about. The figures are a minute old instead of
+ * current; say so, offer the retry, and leave the screen alone.
+ */
+export function RefreshFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-2 rounded-raised border border-warn-line bg-warn-bg px-[13px] py-2.5 text-[12px] text-warn"
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className="shrink-0"
+      >
+        <path d="M12 9v4M12 17h.01" />
+        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+      </svg>
+      Could not refresh just now, so this is the last data that loaded.
+      <button type="button" onClick={onRetry} className="font-semibold underline">
+        Try again
+      </button>
+    </div>
+  );
+}
+
 export function initialsOf(name: string | null | undefined, fallback = "--") {
   const cleaned = (name ?? "").trim();
   if (!cleaned) return fallback;

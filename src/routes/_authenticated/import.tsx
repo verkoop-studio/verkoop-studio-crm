@@ -335,9 +335,20 @@ function ImportPage() {
           </svg>
         </span>
         <span className="flex min-w-0 flex-[1_1_240px] flex-col">
-          <span translate="no" className="truncate text-[14px] font-semibold text-ink">
-            {file?.name ?? "No file chosen yet"}
-          </span>
+          {/*
+           * `translate="no"` belongs to the file name — somebody's own file,
+           * which must never be rewritten — and not to the line that stands in
+           * for it. Marking the whole span left "No file chosen yet" in
+           * English on a Dutch screen, because the attribute does not care
+           * that the content changed.
+           */}
+          {file ? (
+            <span translate="no" className="truncate text-[14px] font-semibold text-ink">
+              {file.name}
+            </span>
+          ) : (
+            <span className="truncate text-[14px] font-semibold text-ink">No file chosen yet</span>
+          )}
           <span className="text-[12px] text-caption vsp-nums">
             {file
               ? `${rows.length} rows, ${headers.length} columns, separated by ${

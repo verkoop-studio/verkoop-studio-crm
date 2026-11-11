@@ -4,7 +4,7 @@ import { addWeeks, format, startOfWeek } from "date-fns";
 import { usePipelineLeads, type Lead } from "@/hooks/use-pipeline-leads";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PIPELINE_STEPS, STAGE_META } from "@/lib/sales";
-import { Panel, Segmented, daysSince, euro } from "@/components/sales-ui";
+import { Panel, RefreshFailed, Segmented, daysSince, euro } from "@/components/sales-ui";
 import { FirstRun } from "@/components/FirstRun";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -46,7 +46,9 @@ function Dashboard() {
     );
   }
 
-  if (isError) {
+  // Only give the whole screen over to the error when there is nothing behind
+  // it. With data already loaded, a failed refresh is a notice, not a page.
+  if (isError && allLeads.length === 0) {
     return (
       <div role="alert" className="panel p-6 text-[13px]">
         Could not load data.{" "}
@@ -124,6 +126,7 @@ function Dashboard() {
 
   return (
     <div className="flex flex-col gap-3.5">
+      {isError && <RefreshFailed onRetry={() => void refetch()} />}
       {/*
        * The canvas gives this screen no visible title — it opens straight on
        * its controls — but a page still needs a heading to be navigable by

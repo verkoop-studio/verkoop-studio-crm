@@ -22,11 +22,21 @@ REVOKE ALL ON crm_private.platform_admins FROM PUBLIC, anon, authenticated;
 -- Existing trusted CRM administrators are the software operators. New company admins are NOT operators.
 INSERT INTO crm_private.platform_admins SELECT DISTINCT user_id FROM public.user_roles WHERE role = 'admin';
 
-DO $$ DECLARE t text; BEGIN
+DO $$ DECLARE t text; idx text; BEGIN
   FOREACH t IN ARRAY ARRAY['leads','activities','import_batches','user_roles','app_settings','account_requests','teamleader_contacts'] LOOP
     IF to_regclass('public.' || t) IS NOT NULL THEN
       EXECUTE format('ALTER TABLE public.%I ADD COLUMN company_id uuid NOT NULL DEFAULT %L REFERENCES public.companies(id)', t, '00000000-0000-4000-8000-000000000001');
-      EXECUTE format('CREATE INDEX %I ON public.%I(company_id)', t || '_company_idx', t);
+      -- teamleader_contacts already owns a `_company_idx`, over the company
+      -- *name*, from 20260903083546. Taking that name again aborts the whole
+      -- migration, which is why a database built by applying every file in
+      -- order could not be provisioned. Fall back to naming this index after
+      -- the column it actually covers; every other table keeps the name it
+      -- already has, so nothing changes on a database where this has run.
+      idx := t || '_company_idx';
+      IF to_regclass('public.' || idx) IS NOT NULL THEN
+        idx := t || '_company_id_idx';
+      END IF;
+      EXECUTE format('CREATE INDEX %I ON public.%I(company_id)', idx, t);
     END IF;
   END LOOP;
 END $$;

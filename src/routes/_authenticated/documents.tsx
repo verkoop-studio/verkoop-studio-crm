@@ -160,6 +160,13 @@ function DocumentsPage() {
 
   return (
     <div className="flex flex-col gap-3.5">
+      {/*
+       * The canvas gives this screen no visible title — it opens straight on
+       * its controls — but a page still needs a heading to be navigable by
+       * anything other than sight. Hidden, so the drawing is unchanged and
+       * the document still has a top to it.
+       */}
+      <h1 className="sr-only">Quotes and contracts</h1>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="relative flex min-w-[190px] flex-[0_1_300px]">

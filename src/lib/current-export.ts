@@ -4,6 +4,13 @@ import { leadCategoryLabel } from "./lead-categories.ts";
 
 // Read-only reporting export for Current (the marketing dashboard).
 // The contract is fixed on Current's side: keep field names, limits and status codes stable.
+//
+// This export carried no personal data at all until contact details were added
+// to it deliberately, so that Current's leads table can show a company, a
+// person and an email instead of an opaque id. Three fields travel and no
+// others: contactName, contactEmail and companyName. Nothing else about a
+// person — no phone, no address, no notes, no LinkedIn — belongs in here, and
+// widening it again is a decision about personal data, not a tidy-up.
 
 export const CURRENT_EXPORT_SETTING_KEY = "current_export_token";
 export const CURRENT_EXPORT_PATH = "/api/integrations/current/export";
@@ -11,9 +18,12 @@ export const CURRENT_EXPORT_MAX_LEADS = 1000;
 const MAX_CAMPAIGN_LENGTH = 200;
 const TOKEN_PATTERN = /^[0-9a-f]{64}$/i;
 
-// Only reporting columns are ever read; contact details never leave the database.
+// Reporting columns, plus the three contact fields the contract names. Phone,
+// notes, address and LinkedIn are deliberately absent and must stay absent.
 const EXPORT_LEAD_COLUMNS =
-  "id, company_id, created_at, stage, value_estimate, source, campaign, deleted_at";
+  "id, company_id, created_at, stage, value_estimate, source, campaign, deleted_at, contact_name, email, company";
+/** The same cap the campaign gets, so one long field cannot bloat the payload. */
+const MAX_CONTACT_LENGTH = 200;
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 export type CurrentExportLeadRow = Pick<
@@ -26,7 +36,8 @@ export type CurrentExportLeadRow = Pick<
   | "source"
   | "campaign"
   | "deleted_at"
->;
+> &
+  Partial<Pick<LeadRow, "contact_name" | "email" | "company">>;
 
 export type CurrentExportLead = {
   id: string;
@@ -37,6 +48,14 @@ export type CurrentExportLead = {
   campaign: string | null;
   category: string | null;
   deletedAt: string | null;
+  /*
+   * Optional, and spelled the way Current reads them. A lead with none of the
+   * three is still a valid row: these send null rather than disappearing, so
+   * the shape of a row never depends on how much is filled in.
+   */
+  contactName: string | null;
+  contactEmail: string | null;
+  companyName: string | null;
 };
 
 export type CurrentExport = {
@@ -84,6 +103,14 @@ function exportValue(value: unknown) {
   return Number.isFinite(number) ? number : null;
 }
 
+function clamp(value: string | null | undefined, limit: number) {
+  if (value === null || value === undefined) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const characters = Array.from(trimmed);
+  return characters.length > limit ? characters.slice(0, limit).join("") : trimmed;
+}
+
 function exportCampaign(value: string | null) {
   if (value === null) return null;
   const characters = Array.from(value);
@@ -117,6 +144,9 @@ export function buildCurrentExport(
       campaign: exportCampaign(row.campaign),
       category: leadCategoryLabel(row),
       deletedAt: row.deleted_at ? isoTimestamp(row.deleted_at) : null,
+      contactName: clamp(row.contact_name, MAX_CONTACT_LENGTH),
+      contactEmail: clamp(row.email, MAX_CONTACT_LENGTH),
+      companyName: clamp(row.company, MAX_CONTACT_LENGTH),
     });
   }
   return {

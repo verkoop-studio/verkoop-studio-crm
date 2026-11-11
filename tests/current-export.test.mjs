@@ -62,6 +62,7 @@ const settings = [
 ];
 
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const isoOf = (value) => new Date(value).toISOString();
 
 function lead(n, overrides = {}) {
   return {
@@ -73,7 +74,7 @@ function lead(n, overrides = {}) {
     source: "website",
     campaign: null,
     deleted_at: null,
-    // Contact columns exist in the table; the export must never pass them on.
+    // Of these, only company, contact_name and email are passed on.
     company: `Company ${n}`,
     contact_name: `Person ${n}`,
     email: `person${n}@example.invalid`,
@@ -197,8 +198,13 @@ test("the token decides the workspace, never a caller-supplied company", async (
     ["id", { ascending: false }],
   ]);
   assert.equal(leadQuery.limit, CURRENT_EXPORT_MAX_LEADS + 1);
-  for (const column of ["company", "contact_name", "email", "phone", "notes"]) {
-    assert.ok(!leadQuery.columns.split(/,\s*/).includes(column), column);
+  const columns = leadQuery.columns.split(/,\s*/);
+  // The three the contract names travel; everything else about a person must not.
+  for (const column of ["company", "contact_name", "email"]) {
+    assert.ok(columns.includes(column), `expected ${column} to be exported`);
+  }
+  for (const column of ["phone", "notes", "linkedin_url", "city", "country"]) {
+    assert.ok(!columns.includes(column), `${column} must never leave the database`);
   }
 });
 
@@ -251,6 +257,9 @@ test("leads map to the Current contract, including soft-deleted leads", async ()
       campaign: "verkoop.studio academy",
       category: "Academy",
       deletedAt: null,
+      contactName: "Person 1",
+      contactEmail: "person1@example.invalid",
+      companyName: "Company 1",
     },
     {
       id: uuid(3),
@@ -261,6 +270,9 @@ test("leads map to the Current contract, including soft-deleted leads", async ()
       campaign: null,
       category: "Verkoop Studio",
       deletedAt: null,
+      contactName: "Person 3",
+      contactEmail: "person3@example.invalid",
+      companyName: "Company 3",
     },
     {
       id: uuid(2),
@@ -271,6 +283,9 @@ test("leads map to the Current contract, including soft-deleted leads", async ()
       campaign: "Gent outreach",
       category: "Verkoop Studio",
       deletedAt: "2026-10-21T10:00:00.000Z",
+      contactName: "Person 2",
+      contactEmail: "person2@example.invalid",
+      companyName: "Company 2",
     },
   ]);
 });
@@ -290,13 +305,18 @@ test("categories follow lead-categories and are null for companies without them"
   assert.equal(plain.leads[0].category, null);
 });
 
-test("the export never contains contact details", async () => {
+test("the export carries three contact fields and nothing else about a person", async () => {
   const response = await call(
     fakeDb({ settings, leads: [lead(1), lead(2, { deleted_at: now.toISOString() })] }),
     request(`Bearer ${verkoopToken}`),
   );
   const text = await response.text();
-  for (const secret of ["Company 1", "Person 1", "example.invalid", "+32", "Private note"]) {
+  // What travels.
+  for (const expected of ["Company 1", "Person 1", "person1@example.invalid"]) {
+    assert.ok(text.includes(expected), expected);
+  }
+  // What must not, however the payload is put together.
+  for (const secret of ["+32", "Private note", "linkedin"]) {
     assert.ok(!text.includes(secret), secret);
   }
   const allowed = [
@@ -308,8 +328,44 @@ test("the export never contains contact details", async () => {
     "campaign",
     "category",
     "deletedAt",
+    "contactName",
+    "contactEmail",
+    "companyName",
   ];
   for (const row of JSON.parse(text).leads) assert.deepEqual(Object.keys(row), allowed);
+});
+
+test("a lead with no contact details is still a valid row", async () => {
+  const bare = lead(7, { company: "", contact_name: null, email: undefined });
+  const body = buildCurrentExport(verkoop, [bare], now);
+  assert.deepEqual(
+    { ...body.leads[0] },
+    {
+      id: uuid(7),
+      createdAt: isoOf(bare.created_at),
+      stage: "new",
+      valueEstimate: null,
+      source: "website",
+      campaign: null,
+      category: "Verkoop Studio",
+      deletedAt: null,
+      contactName: null,
+      contactEmail: null,
+      companyName: null,
+    },
+  );
+});
+
+test("long contact details are capped like the campaign is", async () => {
+  const body = buildCurrentExport(
+    verkoop,
+    [lead(8, { contact_name: "n".repeat(400), email: "e".repeat(400), company: "c".repeat(400) })],
+    now,
+  );
+  const row = body.leads[0];
+  assert.equal(row.contactName.length, 200);
+  assert.equal(row.contactEmail.length, 200);
+  assert.equal(row.companyName.length, 200);
 });
 
 test("more than 1000 leads returns the newest 1000 with complete=false", async () => {

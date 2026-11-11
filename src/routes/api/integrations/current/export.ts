@@ -1,7 +1,9 @@
 import { currentExportMethodNotAllowed, handleCurrentExportRequest } from "@/lib/current-export";
 import { createFileRoute } from "@tanstack/react-router";
 
-// Server-to-server reporting export for Current; no CORS, no redirects, no contact details.
+// Server-to-server reporting export for Current; no CORS, no redirects.
+// Each lead carries the contact name, email and company name, and nothing
+// further about a person — see src/lib/current-export.ts for the contract.
 export const Route = createFileRoute("/api/integrations/current/export")({
   server: {
     handlers: {

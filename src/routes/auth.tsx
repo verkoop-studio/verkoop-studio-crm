@@ -1,82 +1,72 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
 import { supabase, isDatabaseConfigured } from "@/integrations/supabase/client";
-
 import { safeNext } from "@/lib/auth-redirect";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { LanguageToggle, useLanguage } from "@/hooks/use-language";
+import {
+  AuthSplit,
+  Chain,
+  GoogleMark,
+  Or,
+  PasswordField,
+  fieldClass,
+  primaryClass,
+} from "@/components/AuthSplit";
+import { SIBLING_PRODUCT as SIBLING } from "@/components/brand";
+import { PLAN } from "@/lib/billing";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Aanmelden | Sales CRM" },
-      {
-        name: "description",
-        content: "Meld je aan bij het Sales CRM om leads en contacten te beheren.",
-      },
-      { property: "og:title", content: "Aanmelden | Sales CRM" },
-      {
-        property: "og:description",
-        content: "Toegang tot het Sales CRM voor je team.",
-      },
+      { title: "Sign in | Sales" },
+      { name: "description", content: "Sign in to the Verkoop Studio sales workspace." },
+      { property: "og:title", content: "Sign in | Sales" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { next?: string } =>
+  validateSearch: (search: Record<string, unknown>): { next?: string | undefined } =>
     typeof search["next"] === "string" ? { next: search["next"] } : {},
-  component: () =>
-    isDatabaseConfigured ? (
-      <AuthPage />
-    ) : (
-      <main className="flex min-h-screen items-center justify-center bg-secondary p-8">
-        <div className="max-w-lg rounded-2xl border bg-card p-8 shadow-sm">
-          <h1 className="text-2xl font-semibold">Je nieuwe CRM wordt klaargezet</h1>
-          <p className="mt-4 text-muted-foreground">
-            De oude database is losgekoppeld. Zodra je nieuwe database klaar is, kun je hier een
-            nieuw account maken en met een lege CRM starten.
-          </p>
-        </div>
-      </main>
-    ),
+  component: () => (isDatabaseConfigured ? <SignIn /> : <NoDatabase />),
 });
 
-function GoogleMark() {
+function NoDatabase() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
-      <path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-        fill="#34A853"
-      />
-      <path
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-        fill="#EA4335"
-      />
-    </svg>
+    <main className="flex min-h-screen items-center justify-center bg-page p-8">
+      <div className="panel max-w-lg p-8">
+        <h1 className="text-[20px] font-bold tracking-[-0.045em] text-ink-strong">
+          This workspace is still being set up
+        </h1>
+        <p className="mt-3 text-[13px] leading-[1.6] text-body">
+          No database is configured for this build, so there is nothing to sign in to yet. Once it
+          is connected, this is where you come in.
+        </p>
+      </div>
+    </main>
   );
 }
 
-function AuthPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const { language } = useLanguage();
+/*
+ * Signing in is its own page now, and so is asking for an account.
+ *
+ * They used to be one form with a toggle, which made "create an account" look
+ * like something you could just do — when in fact an account is given out by
+ * an admin at your own company. The two doors at the foot of this page are
+ * deliberately not alike: one is a sentence, the other is a panel, because
+ * they lead to completely different places.
+ */
+function SignIn() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { next } = Route.useSearch();
   const redirectTo = safeNext(next);
-  const queryClient = useQueryClient();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [shown, setShown] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
   const { data: googleEnabled = false } = useQuery({
     queryKey: ["auth", "google-enabled"],
     staleTime: 5 * 60 * 1000,
@@ -90,93 +80,30 @@ function AuthPage() {
       return settings.external?.google === true;
     },
   });
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        if (redirectTo) window.location.href = redirectTo;
-        else navigate({ to: "/dashboard" });
-      }
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) return;
+      if (redirectTo) window.location.href = redirectTo;
+      else navigate({ to: "/dashboard" });
     });
   }, [navigate, redirectTo]);
 
   const afterAuth = async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (user) {
-      await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          email: user.email ?? null,
-          full_name:
-            ((user.user_metadata?.["full_name"] as string | undefined) ?? "") || fullName || null,
-        },
-        { onConflict: "id", ignoreDuplicates: true },
-      );
-      const { data: roles, error: companyError } = await supabase.rpc("list_my_companies");
-      if (companyError) throw new Error(companyError.message);
-      if (!roles || roles.length === 0) {
-        const { data: existingRequest } = await supabase
-          .from("account_requests")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (!existingRequest) {
-          await supabase.from("account_requests").insert({
-            user_id: user.id,
-            email: user.email ?? email,
-            full_name:
-              ((user.user_metadata?.["full_name"] as string | undefined) ?? "") || fullName || null,
-          });
-        }
-        await queryClient.invalidateQueries();
-        navigate({ to: "/pending" });
-        return;
-      }
-    }
     await queryClient.invalidateQueries();
     if (redirectTo) {
       window.location.href = redirectTo;
       return;
     }
-    navigate({ to: "/dashboard" });
+    const { data: companies } = await supabase.rpc("list_my_companies");
+    navigate({ to: companies && companies.length > 0 ? "/dashboard" : "/pending" });
   };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoading(true);
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: { full_name: fullName },
-        },
-      });
-      if (error) {
-        setLoading(false);
-        toast.error(error.message);
-        return;
-      }
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      setLoading(false);
-      if (signInError) {
-        toast.success("Account created. Check your email to confirm, then sign in.");
-        setMode("signin");
-        return;
-      }
-      toast.success("Your account request has been sent");
-      await afterAuth();
-      return;
-    }
+    setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
@@ -185,196 +112,213 @@ function AuthPage() {
   };
 
   const google = async () => {
-    const callbackUrl = new URL("/auth", window.location.origin);
-    if (redirectTo) callbackUrl.searchParams.set("next", redirectTo);
+    const callback = new URL("/auth", window.location.origin);
+    if (redirectTo) callback.searchParams.set("next", redirectTo);
     const result = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: callbackUrl.toString() },
+      options: { redirectTo: callback.toString() },
     });
-    if (result.error) {
-      toast.error("Google sign-in failed. Try email instead.");
+    if (result.error) toast.error("Google sign-in failed. Try your email instead.");
+  };
+
+  const sendReset = async () => {
+    if (!email.trim()) {
+      toast.error("Put your work email in first, then press Forgot it.");
       return;
     }
-    if (result.data.url) return;
-    await afterAuth();
+    setResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Check your email. The link in it lets you choose a new password.");
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/70 px-4 py-10">
-      <div className="flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-[0_35px_60px_-25px_oklch(0.3_0.05_172/0.3)] md:flex-row">
-        {/* Brand side */}
-        <div className="relative flex flex-col justify-between gap-10 overflow-hidden bg-primary p-8 text-primary-foreground md:w-5/12 md:p-10">
-          <svg
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full opacity-10"
-          >
-            <defs>
-              <pattern id="sales-crm-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#sales-crm-grid)" />
-          </svg>
+    <AuthSplit
+      left={
+        <>
+          <h1 className="m-0 max-w-[22ch] text-balance text-[31px] font-bold leading-[1.2] tracking-[-0.055em] text-white">
+            From first hello to closed deal.
+          </h1>
 
-          <div className="relative">
-            <div className="font-display text-3xl font-bold uppercase tracking-tight">
-              Sales CRM
-            </div>
-            <div className="mt-2 h-px w-12 bg-primary-foreground/40" />
-            <div className="mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/80">
-              Sales workspace
-            </div>
+          <Chain
+            items={[
+              {
+                title: "A form on your site, at 23:40",
+                note: "lands in New, with the campaign it came from",
+                icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M2 12h20M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20",
+              },
+              {
+                title: "You call them on Tuesday",
+                note: "logged in one tap, the follow-up clock resets",
+                icon: "M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z",
+              },
+              {
+                title: "The quote goes out",
+                note: "the file lives on the lead, not in your mailbox",
+                icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h4",
+              },
+              {
+                title: "Won, and the deal has a value",
+                note: `and ${SIBLING} finally credits the ad that started it`,
+                icon: "m5 13 4 4L19 7",
+              },
+            ]}
+          />
+
+          <div className="mt-auto flex flex-col gap-3">
+            <p className="m-0 text-[13px] leading-[1.65] text-dark-text">
+              A deal you win here goes back to {SIBLING} as revenue, so the ad that started it
+              finally gets the credit.
+            </p>
+            <p className="m-0 border-t border-dark-line pt-3.5 text-[12px] leading-[1.6] text-dark-muted">
+              Invited by someone on your team? Open the link in the invitation instead. It puts you
+              straight into the right company.
+            </p>
           </div>
-
-          <div className="relative">
-            <h1 className="font-display text-3xl leading-tight md:text-4xl">
-              Your next deal starts here
-            </h1>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-primary-foreground/80">
-              Manage your contacts and incoming leads in one shared sales workspace.
+        </>
+      }
+      right={
+        <>
+          <div className="flex flex-col gap-1.5">
+            <h2 className="m-0 text-[24px] font-bold tracking-[-0.05em] text-ink-strong">
+              Welcome back.
+            </h2>
+            <p className="m-0 text-[13px] text-body-quiet">
+              Sign in to the Verkoop Studio sales workspace.
             </p>
           </div>
 
-          <div className="relative flex gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground/60">
-            <span>Contacts</span>
-            <span>•</span>
-            <span>Pipeline</span>
-          </div>
-        </div>
-
-        {/* Form side */}
-        <div className="relative flex flex-col p-8 md:w-7/12 lg:p-12">
-          <div className="absolute right-5 top-5">
-            <LanguageToggle />
-          </div>
-
-          <div className="flex flex-1 flex-col justify-center py-10">
-            <h2 className="text-2xl">{mode === "signup" ? "Create an account" : "Sign in"}</h2>
-
-            <form onSubmit={submit} className="mt-7 space-y-5">
-              {mode === "signup" ? (
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="fullName"
-                    className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground"
-                  >
-                    Full name
-                  </Label>
-                  <Input
-                    id="fullName"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-12 rounded-xl border-input bg-secondary/70 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
-                  />
-                </div>
-              ) : null}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground"
-                >
-                  Work email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  placeholder="you@company.com"
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 rounded-xl border-input bg-secondary/70 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="password"
-                  className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground"
-                >
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                    required
-                    minLength={mode === "signup" ? 8 : undefined}
-                    value={password}
-                    placeholder="••••••••"
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 rounded-xl border-input bg-secondary/70 pl-4 pr-12 focus-visible:border-primary focus-visible:ring-primary/20"
-                  />
-                  <button
-                    type="button"
-                    aria-label={
-                      language === "nl"
-                        ? showPassword
-                          ? "Wachtwoord verbergen"
-                          : "Wachtwoord tonen"
-                        : showPassword
-                          ? "Hide password"
-                          : "Show password"
-                    }
-                    aria-controls="password"
-                    aria-pressed={showPassword}
-                    onClick={() => setShowPassword((visible) => !visible)}
-                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="size-5" aria-hidden="true" />
-                    ) : (
-                      <Eye className="size-5" aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <Button
-                type="submit"
-                className="h-12 w-full rounded-xl text-base font-bold shadow-lg shadow-primary/30"
-                disabled={loading}
-              >
-                {mode === "signup" ? "Create my account" : "Sign in"}
-              </Button>
-            </form>
-
-            {googleEnabled && (
-              <>
-                <div className="my-7 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  <span className="h-px flex-1 bg-border" /> or{" "}
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 w-full rounded-xl"
-                  onClick={google}
-                >
-                  <GoogleMark />
-                  Continue with Google
-                </Button>
-              </>
-            )}
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              {mode === "signup" ? "Already have an account?" : "No access yet?"}{" "}
+          {googleEnabled && (
+            <>
               <button
                 type="button"
-                onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                className="font-bold text-primary hover:underline"
+                onClick={google}
+                className="flex min-h-12 items-center justify-center gap-2.5 rounded-control border border-border-control bg-panel px-4 text-[14px] font-semibold text-ink-strong"
               >
-                {mode === "signup" ? "Sign in" : "Create an account"}
+                <GoogleMark />
+                Continue with Google
               </button>
+              <Or />
+            </>
+          )}
+
+          <form onSubmit={submit} className="flex flex-col gap-3.5">
+            <span className="flex flex-col gap-1.5">
+              <label htmlFor="au-email" className="text-[12px] font-semibold text-body">
+                Work email
+              </label>
+              <input
+                id="au-email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@yourcompany.be"
+                className={fieldClass}
+              />
+            </span>
+
+            <span className="flex flex-col gap-1.5">
+              <span className="flex items-baseline gap-2.5">
+                <label htmlFor="au-pw" className="text-[12px] font-semibold text-body">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  disabled={resetting}
+                  onClick={sendReset}
+                  className="ml-auto text-[12px] font-semibold text-accent"
+                >
+                  {resetting ? "Sending…" : "Forgot it?"}
+                </button>
+              </span>
+              <PasswordField
+                id="au-pw"
+                value={password}
+                onChange={setPassword}
+                autoComplete="current-password"
+                placeholder="Your password"
+                shown={shown}
+                onToggle={() => setShown(!shown)}
+              />
+            </span>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className={primaryClass}
+              style={{ background: "var(--vsp-accent)" }}
+            >
+              {busy ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+
+          <span className="flex items-start gap-2.5 rounded-panel-inner bg-good-wash px-3.5 py-3">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--vsp-good)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="mt-px shrink-0"
+            >
+              <rect x="3" y="11" width="18" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            <span className="text-[12px] leading-[1.6] text-good">
+              You only see the companies you were given access to. Switching between them never
+              mixes their leads.
+            </span>
+          </span>
+
+          {/* Two doors, and they are not alike. */}
+          <div className="flex flex-col gap-3.5 border-t border-hairline pt-4">
+            <p className="m-0 text-[13px] text-body-quiet">
+              Your team already uses this?{" "}
+              <Link to="/request-access" className="font-semibold">
+                Ask them for an account
+              </Link>
+              .
             </p>
-            <p className="mt-2 text-[11px] uppercase tracking-wide text-muted-foreground/70">
-              New accounts need admin approval before they can enter.
-            </p>
+            <Link
+              to="/onboarding/account"
+              className="flex items-center gap-3 rounded-panel border border-accent-tint-line bg-accent-tint-quiet px-4 py-3.5 no-underline"
+            >
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-[13px] font-semibold text-ink">Nobody here uses it yet?</span>
+                <span className="text-[12px] text-body-quiet">
+                  Start a company, free for {PLAN.trialDays} days
+                </span>
+              </span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--vsp-accent-ink)"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="shrink-0"
+              >
+                <path d="M5 12h13M13 6l6 6-6 6" />
+              </svg>
+            </Link>
           </div>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

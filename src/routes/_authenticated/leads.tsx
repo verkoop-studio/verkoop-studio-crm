@@ -155,6 +155,22 @@ function LeadsPage() {
   const current = Math.min(page, pages - 1);
   const rows = filtered.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
 
+  /* Which of the four empty tables this is, and how to get out of it. */
+  const emptyReason: "workspace" | "bin" | "search" | "filters" =
+    everything.length === 0
+      ? "workspace"
+      : inBin && live.length === 0 && !query.trim()
+        ? "bin"
+        : query.trim()
+          ? "search"
+          : "filters";
+  const clearNarrowing = () => {
+    setQuery("");
+    setChannel("all");
+    setCategory("all");
+    setSearch({ stage: undefined, owner: undefined, valued: undefined });
+  };
+
   const binCount = everything.filter((lead) => lead.deleted_at).length;
   const openLead = everything.find((lead) => lead.id === search.lead) ?? null;
 
@@ -540,10 +556,8 @@ function LeadsPage() {
             </span>
           )}
           {!isPending && !isError && rows.length === 0 && (
-            <span className="px-4 py-10 text-center text-[13px] text-body-quiet">
-              {everything.length === 0
-                ? "Your move: no leads yet. Import a list or add the first one."
-                : "Nothing matches these filters."}
+            <span className="block px-4 py-10 text-center">
+              <NothingHere reason={emptyReason} term={query.trim()} onClear={clearNarrowing} />
             </span>
           )}
         </div>
@@ -605,11 +619,21 @@ function LeadsPage() {
                       />
                     </td>
                     <td className="border-b border-hairline px-3 py-3">
-                      <span className="flex items-center gap-2.5">
+                      {/*
+                       * The cap is what makes `truncate` mean anything here. A
+                       * table lays its columns out to fit their contents, so
+                       * without a ceiling one long name — and this country is
+                       * full of them — widened the whole column until the
+                       * table scrolled sideways on a 1400px screen and the
+                       * value column fell off the end. Capping the content,
+                       * not the cell, works in both table and card layouts.
+                       */}
+                      <span className="flex max-w-[280px] items-center gap-2.5">
                         <CompanyTile company={lead.company} />
                         <span className="flex min-w-0 flex-col">
                           <span
                             translate="no"
+                            title={lead.company}
                             className="truncate text-[13px] font-semibold text-ink"
                           >
                             {lead.company}
@@ -621,7 +645,11 @@ function LeadsPage() {
                       </span>
                     </td>
                     <td className="border-b border-hairline px-3 py-3">
-                      <span translate="no" className="truncate text-[13px] text-ink">
+                      <span
+                        translate="no"
+                        title={lead.contact_name ?? undefined}
+                        className="block max-w-[220px] truncate text-[13px] text-ink"
+                      >
                         {lead.contact_name ?? "—"}
                       </span>
                     </td>
@@ -729,13 +757,12 @@ function LeadsPage() {
               )}
               {!isPending && !isError && rows.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="px-[18px] py-10 text-center text-[13px] text-body-quiet"
-                  >
-                    {everything.length === 0
-                      ? "Your move: no leads yet. Import a list or add the first one."
-                      : "Nothing matches these filters."}
+                  <td colSpan={8} className="px-[18px] py-10 text-center">
+                    <NothingHere
+                      reason={emptyReason}
+                      term={query.trim()}
+                      onClear={clearNarrowing}
+                    />
                   </td>
                 </tr>
               )}
@@ -796,6 +823,45 @@ function LeadsPage() {
 
       {search.new && <NewLead onClose={() => setSearch({ new: undefined })} />}
     </div>
+  );
+}
+
+/*
+ * An empty table has three different reasons behind it, and saying "nothing
+ * matches these filters" when the cause is a typo in the search box sends
+ * people to the wrong control. So name the reason, and put the way out of it
+ * in the same sentence.
+ */
+function NothingHere({
+  reason,
+  term,
+  onClear,
+}: {
+  reason: "workspace" | "bin" | "search" | "filters";
+  term: string;
+  onClear: () => void;
+}) {
+  if (reason === "workspace")
+    return (
+      <span className="text-[13px] text-body-quiet">
+        Your move: no leads yet. Import a list or add the first one.
+      </span>
+    );
+  if (reason === "bin")
+    return <span className="text-[13px] text-body-quiet">The bin is empty.</span>;
+  return (
+    <span className="flex flex-wrap items-center justify-center gap-2 text-[13px] text-body-quiet">
+      {reason === "search" ? (
+        <span>
+          Nothing matches <span className="font-semibold text-ink">{term}</span>.
+        </span>
+      ) : (
+        <span>Nothing matches these filters.</span>
+      )}
+      <button type="button" onClick={onClear} className="font-semibold text-accent-ink underline">
+        {reason === "search" ? "Clear the search" : "Clear the filters"}
+      </button>
+    </span>
   );
 }
 

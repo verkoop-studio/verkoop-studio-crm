@@ -88,10 +88,16 @@
   --vsp-dark-text: #a7b2de;
   --vsp-dark-bright: #a8baff;
 
-  /* Radii */
+  /*
+   * Radii. The canvas rounds in five steps, not four: a panel at 16, the rare
+   * inner panel at 14, a card at 12, a raised row at 10 and a control at 8.
+   * The 10 was missing here, so rows the canvas draws at 10 — the suggestions
+   * on the dashboard, the cards in Prospectflow — were coming out at 14.
+   */
   --vsp-radius-panel: 16px;
   --vsp-radius-panel-inner: 14px;
   --vsp-radius-card: 12px;
+  --vsp-radius-raised: 10px;
   --vsp-radius-control: 8px;
   --vsp-radius-chip: 6px;
   --vsp-radius-pill: 999px;
@@ -190,6 +196,7 @@
   --radius-panel: var(--vsp-radius-panel);
   --radius-panel-inner: var(--vsp-radius-panel-inner);
   --radius-card: var(--vsp-radius-card);
+  --radius-raised: var(--vsp-radius-raised);
   --radius-control: var(--vsp-radius-control);
   --radius-chip: var(--vsp-radius-chip);
   --radius-pill: var(--vsp-radius-pill);
@@ -365,6 +372,17 @@
 .vsp-doc .vsp-open {
   opacity: 0;
   transition: opacity 140ms ease;
+}
+/*
+ * Where there is no pointer to hover with, that label can never appear — and
+ * it was still holding about seventy pixels open in every document row, which
+ * is why file names were being cut to a dozen characters on a phone. The whole
+ * row is the button, so nothing is lost by taking it out entirely.
+ */
+@media (hover: none) {
+  .vsp-doc .vsp-open {
+    display: none;
+  }
 }
 .vsp-field:hover .vsp-pen,
 .vsp-field:focus-visible .vsp-pen,

@@ -244,12 +244,23 @@ function Dashboard() {
             })}
           </div>
           <div className="flex gap-2.5 px-[18px] pt-[7px]">
-            {weeks.map((week) => (
+            {weeks.map((week, i) => (
               <span
                 key={week.start.toISOString()}
                 className="min-w-0 flex-1 text-center text-[11px] text-caption"
               >
-                {format(week.start, "d MMM")}
+                {/*
+                 * The month is named once and then only when it changes, the
+                 * way the canvas writes this axis: "15 Sep, 22, 29, 6 Oct".
+                 * Eight labels all carrying "Sep" is three times the ink for
+                 * the same information, and at a narrow width they collide.
+                 */}
+                {format(
+                  week.start,
+                  i === 0 || weeks[i - 1]?.start.getMonth() !== week.start.getMonth()
+                    ? "d MMM"
+                    : "d",
+                )}
               </span>
             ))}
           </div>
@@ -302,7 +313,7 @@ function Dashboard() {
 
       {/* Next step */}
       <div className="flex flex-wrap overflow-hidden rounded-panel bg-dark">
-        <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-2.5 px-[22px] py-5">
+        <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-[9px] px-[22px] py-5">
           <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-dark-muted">
             Next step
           </span>
@@ -320,7 +331,7 @@ function Dashboard() {
               key={todo.key}
               to="/leads"
               search={{ ...todo.search, owner: who === "mine" ? "mine" : undefined }}
-              className="flex items-center gap-3 rounded-panel-inner bg-dark-raised px-[13px] py-[11px] no-underline"
+              className="flex items-center gap-3 rounded-raised bg-dark-raised px-[13px] py-[11px] no-underline"
             >
               <span
                 aria-hidden="true"
@@ -344,7 +355,7 @@ function Dashboard() {
                 <span className="truncate text-[13px] font-semibold text-white">{todo.title}</span>
                 <span className="truncate text-[11px] text-dark-muted">{todo.note}</span>
               </span>
-              <span className="shrink-0 rounded-full bg-dark-raised-2 px-[9px] py-0.5 text-[12px] font-semibold text-white vsp-nums">
+              <span className="shrink-0 rounded-full bg-dark-raised-2 px-[9px] py-[3px] text-[12px] font-semibold text-white vsp-nums">
                 {todo.count}
               </span>
             </Link>

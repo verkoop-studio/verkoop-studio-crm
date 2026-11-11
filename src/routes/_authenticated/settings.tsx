@@ -459,7 +459,7 @@ function PeopleRows({ isAdmin, meId }: { isAdmin: boolean; meId: string | null }
       return data;
     },
   });
-  const { data: leads = [] } = usePipelineLeads();
+  const { data: leads = [], isPending: leadsPending } = usePipelineLeads();
 
   const members = useMemo(
     () =>
@@ -527,10 +527,17 @@ function PeopleRows({ isAdmin, meId }: { isAdmin: boolean; meId: string | null }
                 {member.email}
               </span>
             </span>
+            {/*
+             * Until the leads are in, nobody owns anything as far as this
+             * component knows, and "0 accounts" beside a colleague's name is
+             * a statement rather than a placeholder.
+             */}
             <span className="text-[12px] text-body-quiet vsp-nums">
-              {`${member.owned} ${member.owned === 1 ? "account" : "accounts"}${
-                member.open > 0 ? ` · ${euro(member.value)} open` : ""
-              }`}
+              {leadsPending
+                ? "counting…"
+                : `${member.owned} ${member.owned === 1 ? "account" : "accounts"}${
+                    member.open > 0 ? ` · ${euro(member.value)} open` : ""
+                  }`}
             </span>
             <label htmlFor={`role-${member.id}`} className="sr-only">
               Role for {name}

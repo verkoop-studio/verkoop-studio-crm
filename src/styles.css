@@ -4,11 +4,181 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Sales CRM design system.
- * Neutral slate surfaces and blue accents. All colors in oklch.
- */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Verkoop Studio Sales · design tokens
 
+   One place for the design language. A panel, a hairline, a chip and a button
+   are each defined once here; every stylesheet and component reads these and
+   never hard-codes a hex. The values come from the agreed redesign canvas and
+   are the same values Verkoop Studio Performance uses in app/styles/tokens.css,
+   under the same names, so the two products share one vocabulary rather than
+   two approximations of it.
+
+   Two rules the accent must obey:
+     · it never colours data — only chrome (navigation, links, focus rings,
+       primary buttons). Stage and channel colours are data and live below in
+       their own tokens.
+     · it never stands in for a platform blue. #254bfa is the product.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --vsp-page: #f4f5fb; /* the page behind every panel */
+  --vsp-panel: #ffffff; /* a panel */
+  --vsp-panel-quiet: #fcfcfe; /* a panel cell that wants to recede a touch */
+  --vsp-panel-warm: #fffdf7; /* a panel cell reporting a gap */
+  --vsp-sunken: #fcfcfe; /* table heads, footers */
+  --vsp-row-hover: #fbfcff; /* a table row under the pointer */
+  --vsp-border: #e1e4ef; /* the 1px edge of a panel or control */
+  --vsp-border-control: #dadde9; /* the 1px edge of an input or secondary button */
+  --vsp-hairline: #ebedfc; /* an internal divider: a line, never a gap */
+  --vsp-chip: #ebedfc; /* segmented tracks, meter tracks, tag fills */
+  --vsp-chip-quiet: #f1f2f8; /* a tag fill with no colour of its own */
+  --vsp-wash: #f6f7fd; /* nav hover, icon wells */
+
+  /* Ink */
+  --vsp-ink: #10131c; /* headings, strong labels */
+  --vsp-ink-strong: #0d1019; /* the figure itself */
+  --vsp-text: #505465; /* body */
+  --vsp-text-quiet: #676d7e; /* secondary body */
+  --vsp-caption: #879099; /* 11px captions, empty cells */
+  --vsp-disabled: #a6abbb; /* a value that is not there, a control that is off */
+
+  /* Accent · chrome only */
+  --vsp-accent: #254bfa;
+  --vsp-accent-hover: #2044e5;
+  --vsp-accent-tint: #eaf0ff; /* the accent as a fill */
+  --vsp-accent-tint-quiet: #f5f8ff; /* the same fill, one step back */
+  --vsp-accent-tint-line: #c3d2ff; /* an edge inside the tint */
+  --vsp-accent-ink: #2344ca; /* text on the tint */
+  --vsp-accent-soft: #4265ff; /* the accent one step lighter, for a dot or a bar */
+
+  /* Semantics */
+  --vsp-good: #0d5745;
+  --vsp-good-bg: #e9f6f0;
+  --vsp-good-wash: #f0f7f4;
+  --vsp-good-line: #cfe5db;
+  --vsp-good-bright: #5ee9b5; /* on a dark panel only */
+  --vsp-warn: #7a5a19;
+  --vsp-warn-bg: #fff8e8;
+  --vsp-warn-line: #f0dfb8;
+  --vsp-warn-dot: #c08f2a;
+  --vsp-bad: #b3261e;
+  --vsp-bad-ink: #8f1f19;
+  --vsp-bad-bg: #fdf4f3;
+  --vsp-bad-line: #f3d7d4;
+
+  /* Stage colours. These are data, so the accent must never follow them. */
+  --vsp-stage-new: #879099;
+  --vsp-stage-contacted: #4265ff;
+  --vsp-stage-engaged: #254bfa;
+  --vsp-stage-meeting: #c08f2a;
+  --vsp-stage-closing: #0d5745;
+  --vsp-stage-bar: #8ba0e8; /* a step already walked through */
+
+  /* Volume bars for one series: the busiest week reads first. */
+  --vsp-bar-low: #c2cdf6;
+  --vsp-bar-peak: #254bfa;
+
+  /* Dark surfaces · summary panels and the sign-in page */
+  --vsp-dark: #141827;
+  --vsp-dark-raised: #1b2033;
+  --vsp-dark-raised-2: #252d49;
+  --vsp-dark-line: #2a3148;
+  --vsp-dark-muted: #8d9bd8;
+  --vsp-dark-text: #a7b2de;
+  --vsp-dark-bright: #a8baff;
+
+  /* Radii */
+  --vsp-radius-panel: 16px;
+  --vsp-radius-panel-inner: 14px;
+  --vsp-radius-card: 12px;
+  --vsp-radius-control: 8px;
+  --vsp-radius-chip: 6px;
+  --vsp-radius-pill: 999px;
+
+  /* Controls */
+  --vsp-control-h: 40px; /* minimum height of any control */
+  --vsp-control-h-small: 34px; /* inside a segmented group */
+  --vsp-control-h-primary: 44px; /* a primary button */
+  --vsp-nav-h: 44px;
+
+  /* Elevation · raised controls only. A panel carries no shadow. */
+  --vsp-shadow-raised: 0 4px 12px #13182b24;
+  --vsp-shadow-pressed: 0 1px 2px #13182b1f;
+  --vsp-shadow-menu: 0 12px 32px #20377a24;
+  --vsp-shadow-dialog: 0 24px 80px #20377a2e;
+  --vsp-shadow-sheet: -18px 0 48px #20377a26;
+
+  /* Type */
+  --vsp-font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --vsp-size-caption: 11px;
+  --vsp-size-small: 12px;
+  --vsp-size-body: 13px;
+  --vsp-size-title: 15px;
+  --vsp-size-heading: 20px;
+  --vsp-size-figure: 24px;
+  --vsp-track-title: -0.025em; /* panel titles */
+  --vsp-track-heading: -0.045em; /* headings and figures */
+
+  /* Layout */
+  --vsp-sidebar-w: 240px;
+}
+
+/*
+ * The shadcn semantic properties. They used to carry their own oklch palette;
+ * they now resolve to the tokens above, so there is one set of values in this
+ * product and it is the same set Performance uses. Nothing below invents a
+ * colour of its own.
+ */
+:root {
+  --radius: 0.5rem;
+  --background: var(--vsp-page);
+  --foreground: var(--vsp-ink);
+  --card: var(--vsp-panel);
+  --card-foreground: var(--vsp-ink);
+  --popover: var(--vsp-panel);
+  --popover-foreground: var(--vsp-ink);
+  --primary: var(--vsp-accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--vsp-chip);
+  --secondary-foreground: var(--vsp-text);
+  --muted: var(--vsp-wash);
+  --muted-foreground: var(--vsp-text-quiet);
+  --accent: var(--vsp-accent-tint);
+  --accent-foreground: var(--vsp-accent-ink);
+  --destructive: var(--vsp-bad);
+  --destructive-foreground: #ffffff;
+  --success: var(--vsp-good);
+  --success-foreground: #ffffff;
+  --warning: var(--vsp-warn-bg);
+  --warning-foreground: var(--vsp-warn);
+  --border: var(--vsp-border);
+  --border-strong: var(--vsp-border);
+  --input: var(--vsp-border-control);
+  --ring: var(--vsp-accent);
+  --chart-1: var(--vsp-accent);
+  --chart-2: var(--vsp-accent-soft);
+  --chart-3: var(--vsp-warn-dot);
+  --chart-4: var(--vsp-good);
+  --chart-5: var(--vsp-bar-low);
+  --sidebar: var(--vsp-panel);
+  --sidebar-foreground: var(--vsp-ink);
+  --sidebar-primary: var(--vsp-accent);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--vsp-accent-tint);
+  --sidebar-accent-foreground: var(--vsp-accent-ink);
+  --sidebar-border: var(--vsp-border);
+  --sidebar-ring: var(--vsp-accent);
+}
+
+/* The product has one appearance. The class stays so `dark:` utilities compile. */
+.dark {
+  --background: var(--vsp-page);
+  --foreground: var(--vsp-ink);
+}
+
+/* The same values as Tailwind theme keys, so utilities and shadcn components
+   resolve to one definition rather than a second palette. */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -17,6 +187,13 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --radius-panel: var(--vsp-radius-panel);
+  --radius-panel-inner: var(--vsp-radius-panel-inner);
+  --radius-card: var(--vsp-radius-card);
+  --radius-control: var(--vsp-radius-control);
+  --radius-chip: var(--vsp-radius-chip);
+  --radius-pill: var(--vsp-radius-pill);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -54,61 +231,59 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-display: "Inter", sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --shadow-panel: 0 1px 2px 0 oklch(0.3 0.05 260 / 6%), 0 12px 30px -24px oklch(0.3 0.05 260 / 35%);
-  --background-image-brass: linear-gradient(
-    135deg,
-    oklch(0.5 0.09 260) 0%,
-    oklch(0.62 0.1 260) 100%
-  );
-}
 
-/* Shared sales workspace theme. */
-:root {
-  --radius: 0.625rem;
-  --background: oklch(0.995 0.002 260);
-  --foreground: oklch(0.22 0.03 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 260);
-  --primary: oklch(0.52 0.09 260);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.965 0.014 260);
-  --secondary-foreground: oklch(0.3 0.05 260);
-  --muted: oklch(0.975 0.008 260);
-  --muted-foreground: oklch(0.52 0.02 260);
-  --accent: oklch(0.94 0.03 260);
-  --accent-foreground: oklch(0.3 0.08 260);
-  --destructive: oklch(0.57 0.2 25);
-  --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.58 0.1 260);
-  --success-foreground: oklch(1 0 0);
-  --warning: oklch(0.87 0.16 95);
-  --warning-foreground: oklch(0.24 0.03 100);
-  --border: oklch(0.925 0.008 260);
-  --border-strong: oklch(0.68 0.025 260);
-  --input: oklch(0.925 0.008 260);
-  --ring: oklch(0.52 0.09 260);
-  --chart-1: oklch(0.52 0.09 260);
-  --chart-2: oklch(0.66 0.1 260);
-  --chart-3: oklch(0.87 0.16 95);
-  --chart-4: oklch(0.36 0.07 260);
-  --chart-5: oklch(0.86 0.04 260);
-  --sidebar: oklch(0.985 0.006 260);
-  --sidebar-foreground: oklch(0.24 0.03 260);
-  --sidebar-primary: oklch(0.52 0.09 260);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.94 0.03 260);
-  --sidebar-accent-foreground: oklch(0.3 0.08 260);
-  --sidebar-border: oklch(0.925 0.008 260);
-  --sidebar-ring: oklch(0.52 0.09 260);
-}
+  /* The canvas vocabulary, as utility names. */
+  --color-page: var(--vsp-page);
+  --color-panel: var(--vsp-panel);
+  --color-panel-quiet: var(--vsp-panel-quiet);
+  --color-panel-warm: var(--vsp-panel-warm);
+  --color-sunken: var(--vsp-sunken);
+  --color-hairline: var(--vsp-hairline);
+  --color-chip: var(--vsp-chip);
+  --color-chip-quiet: var(--vsp-chip-quiet);
+  --color-wash: var(--vsp-wash);
+  --color-ink: var(--vsp-ink);
+  --color-ink-strong: var(--vsp-ink-strong);
+  --color-body: var(--vsp-text);
+  --color-body-quiet: var(--vsp-text-quiet);
+  --color-caption: var(--vsp-caption);
+  --color-disabled: var(--vsp-disabled);
+  --color-link: var(--vsp-accent);
+  --color-link-hover: var(--vsp-accent-hover);
+  --color-accent-tint: var(--vsp-accent-tint);
+  --color-accent-tint-quiet: var(--vsp-accent-tint-quiet);
+  --color-accent-tint-line: var(--vsp-accent-tint-line);
+  --color-accent-ink: var(--vsp-accent-ink);
+  --color-accent-soft: var(--vsp-accent-soft);
+  --color-good: var(--vsp-good);
+  --color-good-bg: var(--vsp-good-bg);
+  --color-good-wash: var(--vsp-good-wash);
+  --color-good-line: var(--vsp-good-line);
+  --color-good-bright: var(--vsp-good-bright);
+  --color-warn: var(--vsp-warn);
+  --color-warn-bg: var(--vsp-warn-bg);
+  --color-warn-line: var(--vsp-warn-line);
+  --color-bad: var(--vsp-bad);
+  --color-bad-ink: var(--vsp-bad-ink);
+  --color-bad-bg: var(--vsp-bad-bg);
+  --color-bad-line: var(--vsp-bad-line);
+  --color-dark: var(--vsp-dark);
+  --color-dark-raised: var(--vsp-dark-raised);
+  --color-dark-raised-2: var(--vsp-dark-raised-2);
+  --color-dark-line: var(--vsp-dark-line);
+  --color-dark-muted: var(--vsp-dark-muted);
+  --color-dark-text: var(--vsp-dark-text);
+  --color-dark-bright: var(--vsp-dark-bright);
+  --color-border-control: var(--vsp-border-control);
 
-.dark {
-  --background: oklch(0.995 0.002 260);
-  --foreground: oklch(0.22 0.03 260);
+  --shadow-raised: var(--vsp-shadow-raised);
+  --shadow-pressed: var(--vsp-shadow-pressed);
+  --shadow-menu: var(--vsp-shadow-menu);
+  --shadow-dialog: var(--vsp-shadow-dialog);
+  --shadow-sheet: var(--vsp-shadow-sheet);
+
+  --font-display: var(--vsp-font);
+  --font-sans: var(--vsp-font);
 }
 
 @layer base {
@@ -120,6 +295,9 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1,
@@ -128,58 +306,265 @@
   .font-display {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-
-  h1,
-  h2 {
+    letter-spacing: var(--vsp-track-heading);
     text-transform: none;
-    letter-spacing: 0.01em;
+  }
+
+  a {
+    color: var(--vsp-accent);
+  }
+
+  a:hover {
+    color: var(--vsp-accent-hover);
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--vsp-accent);
+    outline-offset: 2px;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--vsp-accent);
+    outline-offset: 1px;
   }
 }
 
+/* A panel: white on a 1px edge, 16px radius, no shadow. */
 @utility panel {
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-panel);
+  background-color: var(--vsp-panel);
+  border: 1px solid var(--vsp-border);
+  border-radius: var(--vsp-radius-panel);
 }
 
-/* Leads table: bold divisions, clearly visible lines between rows and columns. */
-.leads-table th,
-.leads-table td {
-  padding-inline: 1rem;
-}
-.leads-table thead th {
-  padding-block: 0.8rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-foreground);
-}
-.leads-table thead tr {
-  border-bottom: 2px solid var(--border-strong);
-}
-.leads-table tbody tr {
-  border-bottom: 1px solid color-mix(in oklab, var(--border-strong) 55%, transparent);
-}
-.leads-table tbody tr:last-child {
-  border-bottom: 0;
-}
-.leads-table th + th,
-.leads-table td + td {
-  border-left: 1px solid color-mix(in oklab, var(--border-strong) 40%, transparent);
-}
-.leads-table tbody tr:nth-child(even) {
-  background-color: color-mix(in oklab, var(--secondary) 60%, transparent);
+/* Figures are read, compared and scanned down a column: always tabular. */
+.vsp-nums,
+[data-nums] {
+  font-variant-numeric: tabular-nums;
 }
 
-@utility text-brass {
-  background-image: var(--background-image-brass);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* A table row, and the row actions that appear under the pointer. */
+.vsp-row:hover,
+.vsp-tr:hover {
+  background: var(--vsp-row-hover);
+}
+.vsp-act {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.vsp-tr:hover .vsp-act,
+.vsp-tr:focus-within .vsp-act {
+  opacity: 1;
+}
+
+/* The pencil on an editable field, and the Open link on a document row. */
+.vsp-field .vsp-pen,
+.vsp-doc .vsp-open {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.vsp-field:hover .vsp-pen,
+.vsp-field:focus-visible .vsp-pen,
+.vsp-field:focus-within .vsp-pen,
+.vsp-doc:hover .vsp-open,
+.vsp-doc:focus-visible .vsp-open {
+  opacity: 1;
+}
+.vsp-field:hover,
+.vsp-doc:hover,
+.vsp-set:hover {
+  background: var(--vsp-panel-quiet);
+}
+.vsp-card:hover {
+  border-color: var(--vsp-accent-tint-line);
+  box-shadow: var(--vsp-shadow-pressed);
+}
+
+/* A live dot: a quiet pulse behind a solid centre. */
+.vsp-live::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: vsp-live-pulse 2s ease-out infinite;
+}
+@keyframes vsp-live-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.45;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Navigation icons. Each icon has one moving part that acts out what the
+   section does: the dashboard tiles settle, the second person arrives, the
+   node travels down the branch, the page corner lifts and its lines are
+   written. The parts carry their own classes so the SVG stays a plain SVG.
+   ───────────────────────────────────────────────────────────────────────────── */
+.vsp-nav a:hover,
+.vsp-nav button:hover {
+  background: var(--vsp-wash);
+}
+
+.vsp-nav .ico-dash .tile,
+.vsp-nav .ico-users .mate,
+.vsp-nav .ico-branch .node,
+.vsp-nav .ico-doc .fold,
+.vsp-nav .ico-doc .line {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.vsp-nav .ico-users .mate {
+  transform-origin: left center;
+}
+.vsp-nav .ico-doc .fold {
+  transform-origin: top left;
+}
+.vsp-nav .ico-doc .line {
+  transform-origin: left center;
+}
+
+@keyframes vsp-tile-settle {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(0.74);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.vsp-nav a:hover .ico-dash .tile,
+.vsp-nav button:hover .ico-dash .tile {
+  animation: vsp-tile-settle 360ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+.vsp-nav a:hover .ico-dash .t2,
+.vsp-nav button:hover .ico-dash .t2 {
+  animation-delay: 45ms;
+}
+.vsp-nav a:hover .ico-dash .t3,
+.vsp-nav button:hover .ico-dash .t3 {
+  animation-delay: 90ms;
+}
+.vsp-nav a:hover .ico-dash .t4,
+.vsp-nav button:hover .ico-dash .t4 {
+  animation-delay: 135ms;
+}
+
+@keyframes vsp-mate-arrive {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  24% {
+    transform: translateX(-2.8px);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.vsp-nav a:hover .ico-users .mate,
+.vsp-nav button:hover .ico-users .mate {
+  animation: vsp-mate-arrive 440ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes vsp-node-travel {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  32% {
+    transform: translateX(-7px) scale(0.7);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+.vsp-nav a:hover .ico-branch .node,
+.vsp-nav button:hover .ico-branch .node {
+  animation: vsp-node-travel 520ms cubic-bezier(0.3, 0.8, 0.3, 1) both;
+}
+
+@keyframes vsp-fold-lift {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  42% {
+    transform: rotate(-11deg) scale(0.78);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+.vsp-nav a:hover .ico-doc .fold,
+.vsp-nav button:hover .ico-doc .fold {
+  animation: vsp-fold-lift 460ms cubic-bezier(0.3, 0.8, 0.3, 1) both;
+}
+
+@keyframes vsp-line-write {
+  0% {
+    transform: scaleX(1);
+  }
+  22% {
+    transform: scaleX(0.15);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+.vsp-nav a:hover .ico-doc .line,
+.vsp-nav button:hover .ico-doc .line {
+  animation: vsp-line-write 480ms cubic-bezier(0.4, 0, 0.25, 1) both;
+}
+.vsp-nav a:hover .ico-doc .l2,
+.vsp-nav button:hover .ico-doc .l2 {
+  animation-delay: 70ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vsp-nav .ico-dash .tile,
+  .vsp-nav .ico-users .mate,
+  .vsp-nav .ico-branch .node,
+  .vsp-nav .ico-doc .fold,
+  .vsp-nav .ico-doc .line,
+  .vsp-nav a:hover .ico-dash .tile,
+  .vsp-nav button:hover .ico-dash .tile,
+  .vsp-nav a:hover .ico-users .mate,
+  .vsp-nav button:hover .ico-users .mate,
+  .vsp-nav a:hover .ico-branch .node,
+  .vsp-nav button:hover .ico-branch .node,
+  .vsp-nav a:hover .ico-doc .fold,
+  .vsp-nav button:hover .ico-doc .fold,
+  .vsp-nav a:hover .ico-doc .line,
+  .vsp-nav button:hover .ico-doc .line {
+    animation: none !important;
+  }
+  .vsp-act,
+  .vsp-field .vsp-pen,
+  .vsp-doc .vsp-open {
+    transition: none;
+  }
+  .vsp-live::after {
+    animation: none;
+  }
 }
 
 /* Touch layouts: readable controls and room for the mobile navigation. */
@@ -200,7 +585,9 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
+  /* Long values — an email, a URL — may break. Ordinary words may not: a
+     column narrower than its own heading used to spell VALUE down the page. */
   main {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 }

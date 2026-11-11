@@ -1,45 +1,429 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { DocumentLibrary } from "@/components/DocumentLibrary";
-import { DocumentsHero } from "@/components/LeadDocuments";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { usePipelineLeads } from "@/hooks/use-pipeline-leads";
-import { useLanguage } from "@/hooks/use-language";
-import { Button } from "@/components/ui/button";
+import {
+  documentSize,
+  documentTitle,
+  listLeadDocuments,
+  openLeadDocument,
+} from "@/lib/lead-documents";
+import { STAGE_META, type Stage } from "@/lib/sales";
+import { CompanyTile, Panel, Segmented, euro, lastTouch } from "@/components/sales-ui";
+
 export const Route = createFileRoute("/_authenticated/documents")({
-  head: () => ({ meta: [{ title: "Offertes & contracten | Sales CRM" }] }),
+  head: () => ({ meta: [{ title: "Quotes and contracts | Sales" }] }),
   component: DocumentsPage,
 });
+
+type Kind = "all" | "quotes" | "contracts";
+
+const GROUPS_SHOWN = 8;
+
+/*
+ * Quotes and contracts, grouped by company rather than listed flat.
+ *
+ * A document belongs to a lead, not to this page: it is uploaded on the lead
+ * and appears here, so there is no second filing system to keep in step. Each
+ * group therefore names its lead, its stage and its value, and links back.
+ */
 function DocumentsPage() {
-  const { language } = useLanguage();
-  const nl = language === "nl";
-  const { data: leads = [], isPending, isError, refetch } = usePipelineLeads();
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<Kind>("all");
+  const [ascending, setAscending] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  const { data: leads = [] } = usePipelineLeads();
+  const ids = leads.map((lead) => lead.id).sort();
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, full_name, email");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const {
+    data = [],
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["document-library", ids],
+    queryFn: async () => {
+      // Keep a few storage requests in flight at once, but still cover every lead.
+      const results: { id: string; documents: Awaited<ReturnType<typeof listLeadDocuments>> }[] =
+        [];
+      let next = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(4, ids.length) }, async () => {
+          while (next < ids.length) {
+            const id = ids[next++];
+            if (id) results.push({ id, documents: await listLeadDocuments(id) });
+          }
+        }),
+      );
+      return results;
+    },
+    refetchInterval: 30_000,
+  });
+
+  const uploader = (owner: string | undefined) => {
+    if (!owner) return null;
+    const profile = profiles.find((p) => p.id === owner);
+    return profile?.full_name?.split(" ")[0] ?? null;
+  };
+
+  const term = query.trim().toLowerCase();
+  const wanted = kind === "all" ? null : kind === "quotes" ? "quote" : "contract";
+
+  const groups = data
+    .map((group) => {
+      const lead = leads.find((item) => item.id === group.id);
+      return {
+        id: group.id,
+        company: lead?.company ?? "—",
+        stage: lead?.stage ?? "new",
+        value: lead?.value_estimate ?? null,
+        documents: group.documents.filter(
+          (document) =>
+            (!wanted || document.category === wanted) &&
+            (!term ||
+              (lead?.company ?? "").toLowerCase().includes(term) ||
+              documentTitle(document.name).toLowerCase().includes(term)),
+        ),
+      };
+    })
+    .filter((group) => group.documents.length > 0)
+    .sort(
+      (a, b) =>
+        (ascending ? 1 : -1) *
+          a.company.localeCompare(b.company, "en", { sensitivity: "base", numeric: true }) ||
+        a.id.localeCompare(b.id),
+    );
+
+  const everything = data.flatMap((group) => group.documents);
+  const quotes = everything.filter((document) => document.category === "quote").length;
+  const contracts = everything.filter((document) => document.category === "contract").length;
+  const withPaperwork = data.filter((group) => group.documents.length > 0).length;
+  const shownGroups = showAll ? groups : groups.slice(0, GROUPS_SHOWN);
+  const restGroups = groups.length - shownGroups.length;
+  const shownFiles = groups.reduce((sum, group) => sum + group.documents.length, 0);
+
+  const open = async (path: string) => {
+    const result = await openLeadDocument(path);
+    if (!result.ok)
+      toast.error(
+        result.reason === "popup_blocked"
+          ? "Allow pop-ups to open the document."
+          : "Could not open document.",
+      );
+  };
+
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="mb-2 text-xs font-semibold tracking-[.22em] text-primary">DOCUMENTS</p>
-        <h1 className="break-words text-3xl sm:text-4xl">
-          {nl ? "Offertes & contracten" : "Quotes & contracts"}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {nl
-            ? "Al je offertes en contracten overzichtelijk bij elkaar, gesorteerd op bedrijf."
-            : "All your quotes and contracts in one place, sorted by company."}
-        </p>
+    <div className="flex flex-col gap-3.5">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="relative flex min-w-[190px] flex-[0_1_300px]">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--vsp-caption)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+          <label htmlFor="doc-search" className="sr-only">
+            Search company or document
+          </label>
+          <input
+            id="doc-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search company or document"
+            className="min-h-10 w-full rounded-control border border-border bg-panel py-2.5 pl-[34px] pr-[13px] text-[13px] text-ink"
+          />
+        </span>
+
+        <Segmented<Kind>
+          label="Document type"
+          value={kind}
+          onChange={setKind}
+          options={[
+            { value: "all", label: "Everything" },
+            { value: "quotes", label: "Quotes" },
+            { value: "contracts", label: "Contracts" },
+          ]}
+        />
+
+        <button
+          type="button"
+          onClick={() => setAscending(!ascending)}
+          aria-pressed={!ascending}
+          className="flex min-h-10 items-center gap-2 rounded-control border border-border bg-panel px-[13px] py-2.5 text-[13px] font-medium text-body"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            style={{ transform: ascending ? "none" : "scaleY(-1)" }}
+          >
+            <path d="M4 7h10M4 12h7M4 17h4" />
+            <path d="M17 5v14M14 16l3 3 3-3" />
+          </svg>
+          {ascending ? "Company A to Z" : "Company Z to A"}
+        </button>
+
+        <Link
+          to="/leads"
+          className="ml-auto flex min-h-10 items-center gap-2 rounded-control px-[15px] py-2.5 text-[13px] font-semibold text-white no-underline shadow-raised"
+          style={{ background: "var(--vsp-accent)" }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 19V7M7 12l5-5 5 5" />
+            <path d="M4 21h16" />
+          </svg>
+          Upload to a lead
+        </Link>
       </div>
-      {isPending ? (
-        <p role="status">{nl ? "Prospects laden…" : "Loading prospects…"}</p>
-      ) : isError ? (
-        <div role="alert">
-          {nl ? "Laden mislukt." : "Loading failed."}
-          <Button variant="outline" onClick={() => refetch()}>
-            {nl ? "Opnieuw proberen" : "Retry"}
-          </Button>
+
+      {/* Counts */}
+      <Panel className="flex flex-wrap">
+        <Count
+          label="Companies with paperwork"
+          value={isPending || isError ? "—" : String(withPaperwork)}
+          note={`of ${leads.length} leads`}
+        />
+        <Count
+          label="Quotes"
+          value={isPending || isError ? "—" : String(quotes)}
+          note="sent, across every stage"
+          ink="var(--vsp-accent-ink)"
+        />
+        <Count
+          label="Contracts"
+          value={isPending || isError ? "—" : String(contracts)}
+          note={`on ${data.filter((g) => g.documents.some((d) => d.category === "contract")).length} companies`}
+          ink="var(--vsp-good)"
+        />
+      </Panel>
+
+      {/* The library */}
+      <Panel className="flex flex-col">
+        <span className="flex flex-wrap items-baseline gap-2.5 border-b border-hairline px-[18px] pb-3 pt-[15px]">
+          <span className="text-[15px] font-semibold tracking-[-0.025em]">
+            Everything, by company
+          </span>
+          <span className="ml-auto text-[12px] text-caption vsp-nums">
+            {kind === "all"
+              ? `${everything.length} files across ${withPaperwork} companies`
+              : `${shownFiles} shown, filtered to ${kind}`}
+          </span>
+        </span>
+
+        {isPending && (
+          <span role="status" className="px-[18px] py-8 text-[13px] text-body-quiet">
+            Loading documents…
+          </span>
+        )}
+        {isError && (
+          <span role="alert" className="px-[18px] py-8 text-[13px]">
+            The document library could not be loaded in full.{" "}
+            <button type="button" className="font-semibold text-link" onClick={() => refetch()}>
+              Retry
+            </button>
+          </span>
+        )}
+        {!isPending && !isError && groups.length === 0 && (
+          <span className="px-[18px] py-10 text-[13px] leading-[1.6] text-body-quiet">
+            {everything.length === 0
+              ? "Your move: nothing is filed yet. Open a lead and upload its quote, and it appears here."
+              : "Nothing matches that search."}
+          </span>
+        )}
+
+        {shownGroups.map((group) => {
+          const quoteCount = group.documents.filter((d) => d.category === "quote").length;
+          const contractCount = group.documents.length - quoteCount;
+          const summary = [
+            quoteCount ? `${quoteCount} ${quoteCount === 1 ? "quote" : "quotes"}` : null,
+            contractCount
+              ? `${contractCount} ${contractCount === 1 ? "contract" : "contracts"}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" and ");
+          const won = group.stage === "won";
+
+          return (
+            <div key={group.id} className="border-b border-hairline">
+              <div className="flex items-center gap-[11px] px-[18px] pb-2.5 pt-3">
+                <CompanyTile company={group.company} />
+                <Link
+                  to="/leads"
+                  search={{ lead: group.id }}
+                  translate="no"
+                  className="text-[13px] font-semibold text-ink no-underline hover:underline"
+                >
+                  {group.company}
+                </Link>
+                <span
+                  className="text-[11px]"
+                  style={{ color: won ? "var(--vsp-good)" : "var(--vsp-caption)" }}
+                >
+                  {STAGE_META[group.stage as Stage]?.short ?? group.stage}
+                  {group.value != null ? ` · ${euro(group.value)}` : ""}
+                </span>
+                <span className="ml-auto text-[11px] text-caption">{summary}</span>
+              </div>
+
+              {group.documents.map((document) => {
+                const skin =
+                  document.category === "contract"
+                    ? { bg: "var(--vsp-good-bg)", ink: "var(--vsp-good)" }
+                    : { bg: "var(--vsp-accent-tint)", ink: "var(--vsp-accent-ink)" };
+                const by = uploader((document as { owner?: string }).owner);
+                return (
+                  <button
+                    key={document.id}
+                    type="button"
+                    onClick={() => void open(document.path)}
+                    className="vsp-doc flex w-full items-center gap-3 py-2.5 pl-[57px] pr-[18px] text-left"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex size-7 shrink-0 items-center justify-center rounded-control"
+                      style={{ background: skin.bg, color: skin.ink }}
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.9"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                      </svg>
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span translate="no" className="truncate text-[13px] text-ink">
+                        {documentTitle(document.name)}
+                      </span>
+                      <span className="text-[11px] text-caption">
+                        {[
+                          by,
+                          document.created_at
+                            ? lastTouch(document.created_at).text.toLowerCase()
+                            : null,
+                          documentSize(document.metadata?.["size"] as number | undefined),
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </span>
+                    </span>
+                    <span
+                      className="shrink-0 rounded-chip px-[9px] py-0.5 text-[11px] font-semibold"
+                      style={{ background: skin.bg, color: skin.ink }}
+                    >
+                      {document.category === "contract" ? "Contract" : "Quote"}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="vsp-open flex shrink-0 items-center gap-1.5 text-[12px] font-semibold text-accent-ink"
+                    >
+                      Open
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14 4h6v6" />
+                        <path d="M20 4 10 14" />
+                        <path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
+                      </svg>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+
+        <div className="flex flex-wrap items-center gap-3 bg-sunken px-[18px] py-3">
+          {restGroups > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="rounded-[7px] border border-border bg-panel px-[13px] py-2 text-[12px] font-semibold text-ink"
+            >
+              Show the other {restGroups} companies
+            </button>
+          )}
+          <span className="min-w-0 flex-[1_1_280px] text-[11px] leading-[1.6] text-caption">
+            A document belongs to a lead, not to this page. Upload it on the lead and it appears
+            here; there is no second filing system to keep in step.
+          </span>
         </div>
-      ) : (
-        <>
-          <DocumentsHero leads={leads} />
-          <DocumentLibrary leads={leads} nl={nl} />
-        </>
-      )}
+      </Panel>
+    </div>
+  );
+}
+
+function Count({
+  label,
+  value,
+  note,
+  ink = "var(--vsp-ink)",
+}: {
+  label: string;
+  value: string;
+  note: string;
+  ink?: string;
+}) {
+  return (
+    <div className="flex min-h-[90px] min-w-0 flex-[1_1_200px] flex-col gap-1 border-b border-hairline px-[18px] py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <span className="text-[12px] text-body-quiet">{label}</span>
+      <span className="text-[24px] font-bold tracking-[-0.045em] vsp-nums" style={{ color: ink }}>
+        {value}
+      </span>
+      <span className="text-[11px] text-caption">{note}</span>
     </div>
   );
 }

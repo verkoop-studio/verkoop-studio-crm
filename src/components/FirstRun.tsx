@@ -148,7 +148,7 @@ export function FirstRun() {
             className="h-[5px] w-[74px] overflow-hidden rounded-[3px] bg-chip"
           >
             <span
-              className="block h-full rounded-[3px] bg-accent"
+              className="block h-full rounded-[3px]"
               style={{
                 width: `${(doneCount / setup.length) * 100}%`,
                 background: "var(--vsp-accent)",

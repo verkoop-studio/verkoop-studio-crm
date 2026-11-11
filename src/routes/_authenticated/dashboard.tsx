@@ -50,7 +50,7 @@ function Dashboard() {
     return (
       <div role="alert" className="panel p-6 text-[13px]">
         Could not load data.{" "}
-        <button type="button" className="font-semibold text-accent" onClick={() => refetch()}>
+        <button type="button" className="font-semibold text-link" onClick={() => refetch()}>
           Retry
         </button>
       </div>

@@ -58,6 +58,11 @@ const KIND_SKIN: Record<string, { bg: string; ink: string }> = {
   note: { bg: "var(--vsp-chip-quiet)", ink: "var(--vsp-text)" },
 };
 
+/** The order the canvas puts the kinds in, which is not the order they are declared. */
+const KIND_ORDER = (["call", "email", "linkedin", "meeting", "ads", "note"] as const).map((value) =>
+  CHANNELS.find((channel) => channel.value === value)!,
+);
+
 /** What the box under the kind chips suggests you write. */
 const PLACEHOLDER: Record<Channel, string> = {
   call: "What did they actually say?",
@@ -142,13 +147,18 @@ export function LeadSheet({
           <div className="flex items-start gap-3">
             <CompanyTile company={lead.company} size={38} skin={stageSkin(lead.stage)} />
             <span className="flex min-w-0 flex-1 flex-col gap-px">
-              <span className="truncate text-[18px] font-bold tracking-[-0.035em] text-ink-strong">
+              <span
+                translate="no"
+                className="truncate text-[18px] font-bold tracking-[-0.035em] text-ink-strong"
+              >
                 {lead.company}
               </span>
               <span className="truncate text-[12px] text-body-quiet">
-                {[lead.contact_name, lead.city].filter(Boolean).join(" · ")}
+                <span translate="no">
+                  {[lead.contact_name, lead.city].filter(Boolean).join(" · ")}
+                </span>
                 {lead.contact_name || lead.city ? " · " : ""}
-                came in through {channel.label.toLowerCase()}
+                {`came in through ${channel.label.toLowerCase()}`}
               </span>
             </span>
             <button
@@ -188,7 +198,7 @@ export function LeadSheet({
             </span>
             <span className="inline-flex items-center gap-[7px] rounded-pill bg-wash py-1 pl-1 pr-2.5 text-[12px] text-body">
               <OwnerAvatar id={lead.owner_id} name={ownerName} size={20} />
-              {ownerName?.split(" ")[0] ?? "Nobody yet"}
+              {ownerName ? <span translate="no">{ownerName.split(" ")[0]}</span> : "Nobody yet"}
             </span>
             <span className="ml-auto text-[12px] text-caption">
               Last touch {touch.text.toLowerCase()}
@@ -197,7 +207,7 @@ export function LeadSheet({
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-[22px] pb-[22px] pt-4">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-[22px] pb-[22px] pt-4 [&>*]:shrink-0">
           <ValueAndStage
             lead={lead}
             canEdit={canEdit}
@@ -509,7 +519,7 @@ function LogSomething({ lead, canEdit }: { lead: Lead; canEdit: boolean }) {
       </span>
       <div className="flex flex-col gap-[11px] px-4 pb-3.5">
         <div role="group" aria-label="Kind of contact" className="flex flex-wrap gap-[7px]">
-          {CHANNELS.map((option) => {
+          {KIND_ORDER.map((option) => {
             const on = kind === option.value;
             return (
               <button
@@ -785,6 +795,7 @@ function EditableCell({
         )}
       </span>
       <span
+        translate={options ? undefined : "no"}
         className="truncate text-[13px]"
         style={{ color: value ? "var(--vsp-ink)" : "var(--vsp-disabled)" }}
       >
@@ -867,7 +878,7 @@ function Paperwork({ lead, canEdit }: { lead: Lead; canEdit: boolean }) {
               </svg>
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[13px] font-semibold text-ink">
+              <span translate="no" className="truncate text-[13px] font-semibold text-ink">
                 {documentTitle(document.name)}
               </span>
               <span className="text-[11px] text-caption">
@@ -1022,7 +1033,9 @@ function History({ lead, nameOf }: { lead: Lead; nameOf: (id: string | null) => 
                 </span>
               </span>
               {activity.body && (
-                <span className="text-[12px] leading-[1.55] text-body">{activity.body}</span>
+                <span translate="no" className="text-[12px] leading-[1.55] text-body">
+                  {activity.body}
+                </span>
               )}
             </span>
           </div>

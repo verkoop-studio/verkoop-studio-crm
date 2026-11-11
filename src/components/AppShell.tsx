@@ -197,7 +197,9 @@ function ProfileMenu({ compact = false }: { compact?: boolean }) {
                     <path d="m5 13 4 4L19 7" />
                   </svg>
                 )}
-                <span className="truncate">{company.name}</span>
+                <span translate="no" className="truncate">
+                  {company.name}
+                </span>
               </button>
             );
           })}
@@ -270,11 +272,11 @@ function ProfileMenu({ compact = false }: { compact?: boolean }) {
           {initialsOf(current?.name ?? user?.fullName, "VS")}
         </span>
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-[13px] font-semibold text-ink">
+          <span translate="no" className="truncate text-[13px] font-semibold text-ink">
             {current?.name ?? "Loading…"}
           </span>
           <span className="truncate text-[11px] text-body-quiet">
-            {firstName} · {role}
+            <span translate="no">{firstName}</span> · {role}
           </span>
         </span>
         {pending > 0 && !open && (

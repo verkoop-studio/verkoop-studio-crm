@@ -523,17 +523,20 @@ function LeadsPage() {
                       <span className="flex items-center gap-2.5">
                         <CompanyTile company={lead.company} />
                         <span className="flex min-w-0 flex-col">
-                          <span className="truncate text-[13px] font-semibold text-ink">
+                          <span
+                            translate="no"
+                            className="truncate text-[13px] font-semibold text-ink"
+                          >
                             {lead.company}
                           </span>
-                          <span className="truncate text-[11px] text-caption">
+                          <span translate="no" className="truncate text-[11px] text-caption">
                             {lead.city ?? "—"}
                           </span>
                         </span>
                       </span>
                     </td>
                     <td className="border-b border-hairline px-3 py-3">
-                      <span className="truncate text-[13px] text-ink">
+                      <span translate="no" className="truncate text-[13px] text-ink">
                         {lead.contact_name ?? "—"}
                       </span>
                     </td>
@@ -631,7 +634,7 @@ function LeadsPage() {
                     Could not load leads.{" "}
                     <button
                       type="button"
-                      className="font-semibold text-accent"
+                      className="font-semibold text-link"
                       onClick={() => refetch()}
                     >
                       Retry

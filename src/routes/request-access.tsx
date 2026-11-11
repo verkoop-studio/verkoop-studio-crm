@@ -281,7 +281,7 @@ function RequestAccess() {
               <Link to="/onboarding/account" className="font-semibold">
                 Set it up yourself
               </Link>{" "}
-              instead, free for {PLAN.trialDays} days.
+              {`instead, free for ${PLAN.trialDays} days.`}
             </p>
           </div>
         </>

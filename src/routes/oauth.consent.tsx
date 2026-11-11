@@ -210,15 +210,18 @@ function Consent() {
               <span className="flex min-w-0 flex-[1_1_200px] flex-col">
                 <span className="text-[13px] font-semibold text-ink">Which company</span>
                 <span className="text-[11px] text-caption">
-                  {companies.length > 1
+                  {companies.length > 2
                     ? `the one whose connection address you gave it — never the other ${companies.length - 1}`
-                    : "the one whose connection address you gave it"}
+                    : companies.length === 2
+                      ? "the one whose connection address you gave it — never the other one"
+                      : "the one whose connection address you gave it"}
                 </span>
               </span>
               <span className="flex flex-wrap gap-1.5">
                 {companies.map((company) => (
                   <span
                     key={company.id}
+                    translate="no"
                     className="rounded-pill bg-chip-quiet px-2.5 py-1 text-[12px] text-body"
                   >
                     {company.name}

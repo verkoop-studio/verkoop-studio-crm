@@ -74,8 +74,9 @@ function SettingsPage() {
             Settings and team
           </h1>
           <span className="text-[12px] text-body-quiet">
-            Everything about {company?.name ?? "this company"}, in one list. Nothing is hidden
-            behind a tab.
+            {`Everything about ${
+              company?.name ?? "this company"
+            }, in one list. Nothing is hidden behind a tab.`}
           </span>
         </div>
         {pendingRequests.length > 0 && (
@@ -519,14 +520,17 @@ function PeopleRows({ isAdmin, meId }: { isAdmin: boolean; meId: string | null }
             <OwnerAvatar id={member.id} name={name} size={32} />
             <span className="flex min-w-0 flex-[1_1_200px] flex-col">
               <span className="text-[13px] font-semibold text-ink">
-                {name}
+                <span translate="no">{name}</span>
                 {you ? " (you)" : ""}
               </span>
-              <span className="truncate text-[11px] text-caption">{member.email}</span>
+              <span translate="no" className="truncate text-[11px] text-caption">
+                {member.email}
+              </span>
             </span>
             <span className="text-[12px] text-body-quiet vsp-nums">
-              {member.owned} {member.owned === 1 ? "account" : "accounts"}
-              {member.open > 0 ? ` · ${euro(member.value)} open` : ""}
+              {`${member.owned} ${member.owned === 1 ? "account" : "accounts"}${
+                member.open > 0 ? ` · ${euro(member.value)} open` : ""
+              }`}
             </span>
             <label htmlFor={`role-${member.id}`} className="sr-only">
               Role for {name}
@@ -671,7 +675,7 @@ function PendingRow({ requests }: { requests: PendingRequest[] }) {
             } asked for an account`}
           </span>
           <span className="truncate text-[11px] text-caption">
-            {emails.slice(0, 2).join(" and ")}
+            <span translate="no">{emails.slice(0, 2).join(" and ")}</span>
             {emails.length > 2 ? ` and ${emails.length - 2} more` : ""}
           </span>
         </span>
@@ -702,8 +706,16 @@ function PendingRow({ requests }: { requests: PendingRequest[] }) {
             className="flex flex-wrap items-center gap-3.5 border-t border-hairline bg-sunken px-[18px] py-3"
           >
             <span className="flex min-w-0 flex-[1_1_220px] flex-col">
-              <span className="text-[13px] text-ink">{request.full_name || "Name not given"}</span>
-              <span className="truncate text-[11px] text-caption">{request.email}</span>
+              <span className="text-[13px] text-ink">
+                {request.full_name ? (
+                  <span translate="no">{request.full_name}</span>
+                ) : (
+                  "Name not given"
+                )}
+              </span>
+              <span translate="no" className="truncate text-[11px] text-caption">
+                {request.email}
+              </span>
             </span>
             <span className="flex gap-2">
               <button
@@ -916,7 +928,7 @@ function OpenInvitationsRow() {
           const expired = Date.parse(invitation.expires_at) <= Date.now();
           return (
             <span key={invitation.id} className="flex flex-wrap items-center gap-2.5">
-              <span className="min-w-0 flex-1 truncate text-[13px] text-ink">
+              <span translate="no" className="min-w-0 flex-1 truncate text-[13px] text-ink">
                 {invitation.email}
               </span>
               <span
@@ -1043,8 +1055,9 @@ function RemoveCompanyRow({ companyName, isAdmin }: { companyName: string; isAdm
         <span className="flex min-w-0 flex-[1_1_260px] flex-col">
           <span className="text-[13px] font-semibold text-bad-ink">Remove this company</span>
           <span className="text-[11px] text-body">
-            {leads.length} {leads.length === 1 ? "lead" : "leads"}, every document and the whole
-            outreach history go with it. This one cannot be undone.
+            {`${leads.length} ${
+              leads.length === 1 ? "lead" : "leads"
+            }, every document and the whole outreach history go with it. This cannot be undone.`}
           </span>
         </span>
         <button

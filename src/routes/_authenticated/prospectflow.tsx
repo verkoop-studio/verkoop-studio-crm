@@ -102,7 +102,7 @@ function ProspectFlow() {
     return (
       <div role="alert" className="panel p-6 text-[13px]">
         Loading failed.{" "}
-        <button type="button" className="font-semibold text-accent" onClick={() => refetch()}>
+        <button type="button" className="font-semibold text-link" onClick={() => refetch()}>
           Retry
         </button>
       </div>
@@ -258,11 +258,18 @@ function ProspectFlow() {
                       >
                         <span className="flex items-start gap-2">
                           <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate text-[13px] font-semibold text-ink">
+                            <span
+                              translate="no"
+                              className="truncate text-[13px] font-semibold text-ink"
+                            >
                               {lead.company}
                             </span>
                             <span className="truncate text-[11px] text-caption">
-                              {lead.contact_name ?? "No contact yet"}
+                              {lead.contact_name ? (
+                                <span translate="no">{lead.contact_name}</span>
+                              ) : (
+                                "No contact yet"
+                              )}
                             </span>
                           </span>
                           <span

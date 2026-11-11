@@ -8,9 +8,9 @@ import {
   stepButtonClass,
   stepButtonStyle,
 } from "@/components/Onboarding";
-import { Panel, initialsOf } from "@/components/sales-ui";
+import { Panel, euroCents, initialsOf } from "@/components/sales-ui";
 import { ROLES, type Role } from "@/lib/sales";
-import { trialSchedule } from "@/lib/billing";
+import { PLAN, trialSchedule } from "@/lib/billing";
 import { readDraft, writeDraft, type Invite } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/team")({
@@ -63,8 +63,9 @@ function Team() {
             Who else sells here?
           </h1>
           <p className="m-0 text-[14px] text-body-quiet">
-            Everyone is included in the €14,99. Adding people costs nothing, so the only reason to
-            wait is that you are not sure yet.
+            {`Everyone is included in the ${euroCents(
+              PLAN.monthlyExclVat,
+            )}. Adding people costs nothing, so the only reason to wait is that you are not sure yet.`}
           </p>
         </div>
 

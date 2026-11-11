@@ -257,7 +257,7 @@ function DocumentsPage() {
         {isError && (
           <span role="alert" className="px-[18px] py-8 text-[13px]">
             The document library could not be loaded in full.{" "}
-            <button type="button" className="font-semibold text-accent" onClick={() => refetch()}>
+            <button type="button" className="font-semibold text-link" onClick={() => refetch()}>
               Retry
             </button>
           </span>
@@ -290,6 +290,7 @@ function DocumentsPage() {
                 <Link
                   to="/leads"
                   search={{ lead: group.id }}
+                  translate="no"
                   className="text-[13px] font-semibold text-ink no-underline hover:underline"
                 >
                   {group.company}
@@ -337,7 +338,7 @@ function DocumentsPage() {
                       </svg>
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[13px] text-ink">
+                      <span translate="no" className="truncate text-[13px] text-ink">
                         {documentTitle(document.name)}
                       </span>
                       <span className="text-[11px] text-caption">

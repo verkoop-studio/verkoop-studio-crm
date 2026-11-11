@@ -42,7 +42,8 @@ export const STAGE_META: Record<Stage, { label: string; short: string; meaning: 
   },
   meeting: {
     label: "4. Meeting booked",
-    short: "Meeting",
+    // The canvas writes this stage out in full everywhere it appears.
+    short: "Meeting booked",
     meaning: "A call or visit is agreed.",
   },
   proposal: {

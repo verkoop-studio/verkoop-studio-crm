@@ -681,9 +681,90 @@ export const SALES_NL: Record<string, string> = {
     "Opzeggen is een knop bij Instellingen. Geen mail, geen telefoon, geen opzegtermijn, en je leads gaan er als CSV mee naar buiten.",
 };
 
+/** The channel marks, as the lead sheet writes them mid-sentence. */
+const CHANNEL_NL: Record<string, string> = {
+  "email outreach": "e-mailcontact",
+  linkedin: "LinkedIn",
+  "ads and inbound": "advertenties of een aanvraag",
+  referral: "een doorverwijzing",
+  "website request": "het websiteformulier",
+  "csv import": "een CSV-import",
+};
+
+const age = (value: string) => {
+  const days = value.match(/^(\d+) days ago$/);
+  if (days) return `${days[1]} dagen geleden`;
+  if (value === "today") return "vandaag";
+  if (value === "yesterday") return "gisteren";
+  if (value === "never") return "nooit";
+  return value;
+};
+
 /** The lines that carry a figure, so a fixed lookup cannot reach them. */
 export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
+  [/^came in through (.+)$/, (m) => `kwam binnen via ${CHANNEL_NL[m[1] ?? ""] ?? m[1] ?? ""}`],
+  [/^(today|yesterday|never|\d+ days ago), (.+)$/, (m) => `${age(m[1] ?? "")}, ${m[2]}`],
+  [
+    /^Last touch (today|yesterday|never|\d+ days ago)$/,
+    (m) => `Laatste contact ${age(m[1] ?? "")}`,
+  ],
   [/^Refreshed (\d+) min ago$/, (m) => `${m[1]} min geleden ververst`],
+  [
+    /^Everything about (.+), in one list\. Nothing is hidden behind a tab\.$/,
+    (m) => `Alles over ${m[1]}, in één lijst. Niets zit verstopt achter een tab.`,
+  ],
+  [/^(\d+) accounts? · (.+) open$/, (m) => `${m[1]} accounts · ${m[2]} open`],
+  [
+    /^(\d+) leads?, every document and the whole outreach history go with it\. This cannot be undone\.$/,
+    (m) =>
+      `${m[1]} leads, elk document en de hele contacthistoriek gaan mee. Dit kan niet ongedaan gemaakt worden.`,
+  ],
+  [
+    /^(\d+) open prospects, (.+) estimated\. Drag a card to move it\.$/,
+    (m) => `${m[1]} open prospects, ${m[2]} geschat. Sleep een kaart om ze te verplaatsen.`,
+  ],
+  [
+    /^(\d+) of your own, (.+) estimated\. Drag a card to move it\.$/,
+    (m) => `${m[1]} van jezelf, ${m[2]} geschat. Sleep een kaart om ze te verplaatsen.`,
+  ],
+  [/^(.+) · all valued$/, (m) => `${m[1]} · alles gewaardeerd`],
+  [/^(.+) · (\d+) not valued$/, (m) => `${m[1]} · ${m[2]} zonder waarde`],
+  [/^(.+), you are the admin$/, (m) => `${m[1]}, jij bent de beheerder`],
+  [
+    /^(\d+) rows, (\d+) columns, separated by (.+)$/,
+    (m) =>
+      `${m[1]} rijen, ${m[2]} kolommen, gescheiden door ${
+        { semicolons: "puntkomma's", commas: "komma's", tabs: "tabs" }[m[3] ?? ""] ?? m[3] ?? ""
+      }`,
+  ],
+  [
+    /^(.+), (\d+) (?:person|people)$/,
+    (m) => `${m[1]}, ${m[2]} ${Number(m[2]) === 1 ? "persoon" : "personen"}`,
+  ],
+  [/^(\d+) imported · (.+)$/, (m) => `${m[1]} geïmporteerd · ${m[2]}`],
+  [
+    /^Nothing is charged today\. We ask for a card so it does not stop working on day (\d+)\.$/,
+    (m) =>
+      `Vandaag wordt er niets aangerekend. We vragen een kaart zodat het op dag ${m[1]} niet stopt.`,
+  ],
+  [
+    /^Your workspace is ready\. Keep it for (\d+) days, on us\.$/,
+    (m) => `Je werkruimte staat klaar. Hou ze ${m[1]} dagen, op ons.`,
+  ],
+  [
+    /^No card now\. Nothing is charged before (.+), and you can stop in one click\.$/,
+    (m) =>
+      `Nu geen kaart. Er wordt niets aangerekend voor ${m[1]}, en je kan met één klik stoppen.`,
+  ],
+  [
+    /^Everyone is included in the (.+)\. Adding people costs nothing, so the only reason to wait is that you are not sure yet\.$/,
+    (m) =>
+      `Iedereen zit in de ${m[1]}. Mensen toevoegen kost niets, dus de enige reden om te wachten is dat je het nog niet zeker weet.`,
+  ],
+  [/^Nobody at your company uses this yet\?$/, () => "Gebruikt er bij jou nog niemand dit?"],
+  [/^instead, free for (\d+) days\.$/, (m) => `in de plaats, ${m[1]} dagen gratis.`],
+  [/^Start a company, free for (\d+) days$/, (m) => `Start een bedrijf, ${m[1]} dagen gratis`],
+  [/^Allow pop-ups to open the document\.$/, () => "Sta pop-ups toe om het document te openen."],
   [/^(\d+) last full week$/, (m) => `${m[1]} de vorige volledige week`],
   [/^(\d+) active · (\d+) not yet valued$/, (m) => `${m[1]} actief · ${m[2]} nog zonder waarde`],
   [/^(\d+) won \/ (\d+) closed$/, (m) => `${m[1]} gewonnen / ${m[2]} afgesloten`],
@@ -696,7 +777,6 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
   [/^Select all (\d+)$/, (m) => `Selecteer alle ${m[1]}`],
   [/^Select (.+)$/, (m) => `Selecteer ${m[1]}`],
   [/^(\d+) days ago$/, (m) => `${m[1]} dagen geleden`],
-  [/^Last touch (.+)$/, (m) => `Laatste contact ${m[1]}`],
   [/^Show the other (\d+)$/, (m) => `Toon de andere ${m[1]}`],
   [/^Show the other (\d+) companies$/, (m) => `Toon de andere ${m[1]} bedrijven`],
   [/^(\d+) more in (.+)$/, (m) => `${m[1]} meer in ${m[2]}`],

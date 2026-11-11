@@ -335,7 +335,7 @@ function ImportPage() {
           </svg>
         </span>
         <span className="flex min-w-0 flex-[1_1_240px] flex-col">
-          <span className="truncate text-[14px] font-semibold text-ink">
+          <span translate="no" className="truncate text-[14px] font-semibold text-ink">
             {file?.name ?? "No file chosen yet"}
           </span>
           <span className="text-[12px] text-caption vsp-nums">
@@ -415,6 +415,7 @@ function ImportPage() {
                         <td className="border-b border-hairline px-[18px] py-2.5">
                           <span className="flex items-center gap-2.5">
                             <span
+                              translate="no"
                               className="text-[13px] font-semibold"
                               style={{
                                 color: out ? "var(--vsp-ink)" : "var(--vsp-disabled)",
@@ -430,7 +431,10 @@ function ImportPage() {
                           </span>
                         </td>
                         <td className="border-b border-hairline px-3.5 py-2.5">
-                          <span className="block max-w-[260px] truncate text-[12px] text-caption">
+                          <span
+                            translate="no"
+                            className="block max-w-[260px] truncate text-[12px] text-caption"
+                          >
                             {rows[0]?.[index] || "—"}
                           </span>
                         </td>
@@ -633,7 +637,7 @@ function ImportPage() {
                 className="flex flex-wrap items-center gap-3 border-b border-hairline px-[18px] py-3 last:border-b-0"
               >
                 <span className="flex min-w-0 flex-[1_1_240px] flex-col">
-                  <span className="truncate text-[13px] font-semibold text-ink">
+                  <span translate="no" className="truncate text-[13px] font-semibold text-ink">
                     {batch.file_name}
                   </span>
                   <span className="text-[11px] text-caption vsp-nums">

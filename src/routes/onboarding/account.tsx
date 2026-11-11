@@ -246,7 +246,7 @@ function Account() {
                 <path d="M8 11V7a4 4 0 0 1 8 0v4" />
               </svg>
               <span className="text-[12px] leading-[1.6] text-good">
-                No card now. Nothing is charged before {firstCharge}, and you can stop in one click.
+                {`No card now. Nothing is charged before ${firstCharge}, and you can stop in one click.`}
               </span>
             </span>
 

@@ -362,7 +362,17 @@ const PATTERNS: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
   [/^(.+) copied$/, (m) => `${m[1]} gekopieerd`],
 ];
 
-const EN = Object.fromEntries(Object.entries(NL).map(([english, dutch]) => [dutch, english]));
+/*
+ * The English direction is the Dutch dictionary read backwards. A Dutch word
+ * that is also an English string in the product — "Prospectflow" is both —
+ * would otherwise be "translated" out of the English interface, so those are
+ * left out of the reverse map.
+ */
+const EN = Object.fromEntries(
+  Object.entries(NL)
+    .filter(([english, dutch]) => dutch !== english && !(dutch in NL))
+    .map(([english, dutch]) => [dutch, english]),
+);
 
 function translate(value: string, language: Language) {
   const trimmed = value.trim();
@@ -411,6 +421,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
       if (!(root instanceof Element)) return;
       if (["SCRIPT", "STYLE", "CODE", "PRE"].includes(root.tagName)) return;
+      // Somebody's own words — a company, a person, a column in their file —
+      // are data, not interface. HTML already has an attribute for saying so.
+      if (root.getAttribute("translate") === "no") return;
       for (const attribute of ["placeholder", "title", "aria-label"]) {
         const current = root.getAttribute(attribute);
         if (!current) continue;

@@ -248,6 +248,8 @@
   --color-body-quiet: var(--vsp-text-quiet);
   --color-caption: var(--vsp-caption);
   --color-disabled: var(--vsp-disabled);
+  --color-link: var(--vsp-accent);
+  --color-link-hover: var(--vsp-accent-hover);
   --color-accent-tint: var(--vsp-accent-tint);
   --color-accent-tint-quiet: var(--vsp-accent-tint-quiet);
   --color-accent-tint-line: var(--vsp-accent-tint-line);

@@ -151,11 +151,12 @@ function Checkout() {
         <div className="flex w-full max-w-[940px] flex-col gap-[22px]">
           <div className="flex flex-col gap-1.5">
             <h1 className="m-0 text-[26px] font-bold tracking-[-0.055em] text-ink-strong">
-              Your workspace is ready. Keep it for {PLAN.trialDays} days, on us.
+              {`Your workspace is ready. Keep it for ${PLAN.trialDays} days, on us.`}
             </h1>
             <p className="m-0 text-[14px] text-body-quiet">
-              Nothing is charged today. We ask for a card so it does not stop working on day{" "}
-              {PLAN.trialDays + 1}.
+              {`Nothing is charged today. We ask for a card so it does not stop working on day ${
+                PLAN.trialDays + 1
+              }.`}
             </p>
           </div>
 
@@ -614,8 +615,9 @@ function Checkout() {
                   <span className="flex flex-col">
                     <span className="text-[14px] font-semibold tracking-[-0.02em]">Sales</span>
                     <span className="text-[12px] text-body-quiet">
-                      {draft.companyName ?? "Your company"}, {people}{" "}
-                      {people === 1 ? "person" : "people"}
+                      {`${draft.companyName ?? "Your company"}, ${people} ${
+                        people === 1 ? "person" : "people"
+                      }`}
                     </span>
                   </span>
                 </span>

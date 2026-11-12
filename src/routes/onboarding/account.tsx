@@ -13,7 +13,8 @@ import {
   passwordStrength,
   primaryClass,
 } from "@/components/AuthSplit";
-import { PLAN, billingDate, trialSchedule } from "@/lib/billing";
+import { euroCents } from "@/components/sales-ui";
+import { FREE_LEADS, PLAN } from "@/lib/billing";
 import { writeDraft } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/account")({
@@ -31,7 +32,6 @@ function Account() {
   const [busy, setBusy] = useState(false);
   const strength = passwordStrength(password);
   const { language } = useLanguage();
-  const firstCharge = billingDate(trialSchedule(new Date()).firstChargeOn, language);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -56,11 +56,15 @@ function Account() {
     navigate({ to: "/onboarding/company" });
   };
 
+  // One line each, because the Dutch translator matches whole sentences.
+  const priceLine = `Free up to ${FREE_LEADS} leads, then ${euroCents(PLAN.tiers[1].monthlyExclVat)} a month, and ${euroCents(PLAN.tiers[2].monthlyExclVat)} over ${PLAN.tiers[1].upTo} leads. For the whole company, excl. VAT. Never per person.`;
+  const freeLine = `No card, and nothing counting down. Nothing is charged until your contact base passes ${FREE_LEADS} leads.`;
+
   const perks = [
     "Every lead, every stage, in one list",
     "Unlimited people, one price for the company",
     "Quotes and contracts on the lead, not in a mailbox",
-    `Stop before day ${PLAN.trialDays} and you are never charged`,
+    `Nothing to pay until lead ${FREE_LEADS + 1}`,
   ];
 
   return (
@@ -74,19 +78,15 @@ function Account() {
 
         <div className="flex flex-col gap-3 rounded-panel border border-dark-line bg-dark-raised px-[22px] py-5">
           <span className="flex flex-wrap items-baseline gap-2.5">
-            <span className="text-[30px] font-bold tracking-[-0.05em] text-white">
-              {`${PLAN.trialDays} days free`}
-            </span>
+            <span className="text-[30px] font-bold tracking-[-0.05em] text-white">Free</span>
             <span
               className="rounded-pill px-2.5 py-1 text-[12px] font-semibold"
               style={{ background: "var(--vsp-good)", color: "var(--vsp-good-bright)" }}
             >
-              No card today
+              No card needed
             </span>
           </span>
-          <span className="text-[13px] text-dark-muted">
-            Then €14,99 a month for the whole company, excl. VAT. Not per person.
-          </span>
+          <span className="text-[13px] text-dark-muted">{priceLine}</span>
           <span aria-hidden="true" className="h-px bg-dark-line" />
           <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
             {perks.map((perk) => (
@@ -215,7 +215,7 @@ function Account() {
               className={`${primaryClass} flex items-center justify-center gap-2.5`}
               style={{ background: "var(--vsp-accent)" }}
             >
-              {busy ? "Setting it up…" : `Start my ${PLAN.trialDays} days`}
+              {busy ? "Setting it up…" : "Open my workspace"}
               <svg
                 width="15"
                 height="15"
@@ -247,9 +247,7 @@ function Account() {
                 <rect x="3" y="11" width="18" height="10" rx="2" />
                 <path d="M8 11V7a4 4 0 0 1 8 0v4" />
               </svg>
-              <span className="text-[12px] leading-[1.6] text-good">
-                {`No card now. Nothing is charged before ${firstCharge}, and you can stop in one click.`}
-              </span>
+              <span className="text-[12px] leading-[1.6] text-good">{freeLine}</span>
             </span>
 
             <p className="m-0 text-[11px] leading-[1.6] text-caption">

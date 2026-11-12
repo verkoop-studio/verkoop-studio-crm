@@ -13,7 +13,7 @@ import {
   passwordStrength,
   primaryClass,
 } from "@/components/AuthSplit";
-import { PLAN } from "@/lib/billing";
+import { FREE_LEADS } from "@/lib/billing";
 
 export const Route = createFileRoute("/request-access")({
   head: () => ({
@@ -281,7 +281,7 @@ function RequestAccess() {
               <Link to="/onboarding/account" className="font-semibold">
                 Set it up yourself
               </Link>{" "}
-              {`instead, free for ${PLAN.trialDays} days.`}
+              {`instead, free up to ${FREE_LEADS} leads.`}
             </p>
           </div>
         </>

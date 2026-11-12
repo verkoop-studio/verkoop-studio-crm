@@ -1,22 +1,22 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Mark } from "@/components/brand";
-import { PLAN } from "@/lib/billing";
+import { FREE_LEADS } from "@/lib/billing";
 
 /*
  * The stepper that runs through signing up on your own.
  *
- * 1 Account, 2 Company, 3 Team, 4 You, 5 Checkout — with the explainer video
- * between 4 and 5 and the first-run dashboard after it. Everything from step
- * 2 onwards says which day of the free fortnight you are on, because the card
- * is only asked for at the end and people should be able to see that.
+ * 1 Account, 2 Company, 3 Team, 4 You — with the explainer video after 4,
+ * where the workspace is opened, and the first-run dashboard after that.
+ * There is no checkout step and no trial: the workspace is free until it
+ * crosses the free ceiling, so nothing is asked for and nothing counts down.
  */
-export const STEPS = ["Account", "Company", "Team", "You", "Checkout"] as const;
+export const STEPS = ["Account", "Company", "Team", "You"] as const;
 
 export function Stepper({ step }: { step: number }) {
   return (
     <>
-      {/* A five-stop rail does not fit a phone; the same fact, in words. */}
+      {/* A four-stop rail does not fit a phone; the same fact, in words. */}
       <span className="text-[12px] font-semibold text-accent-ink sm:hidden">
         {`Step ${step} of ${STEPS.length} · ${STEPS[step - 1]}`}
       </span>
@@ -79,15 +79,7 @@ export function Stepper({ step }: { step: number }) {
   );
 }
 
-export function OnboardingBar({
-  step,
-  day = 1,
-  aside,
-}: {
-  step: number;
-  day?: number | null;
-  aside?: ReactNode;
-}) {
+export function OnboardingBar({ step, aside }: { step: number; aside?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-4 border-b border-border bg-panel px-7 py-[18px]">
       <Link
@@ -100,7 +92,7 @@ export function OnboardingBar({
       </Link>
       <Stepper step={step} />
       <span className="ml-auto flex items-center gap-3.5 text-[12px] text-body-quiet">
-        {aside ?? (day != null ? <span>{`Day ${day} of ${PLAN.trialDays} free`}</span> : null)}
+        {aside ?? <span>{`Free until ${FREE_LEADS} leads`}</span>}
       </span>
     </div>
   );

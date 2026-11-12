@@ -1,127 +1,78 @@
 /*
- * Billing, behind one interface.
+ * What the Sales CRM costs, behind one interface.
  *
- * Nothing about billing existed in this product before the redesign, and no
- * payment processor is wired up yet. Everything that would talk to Stripe goes
- * through this module, so there is exactly one place to replace when keys
- * exist. With no keys configured it degrades the way `isDatabaseConfigured`
- * does: the screens still work, the call returns a `stub` result and says so,
- * and nothing is charged because nothing is sent.
+ * The price is a function of one number: how many leads are in the contact
+ * base. Nothing is charged until the workspace crosses the free ceiling, so a
+ * new workspace is opened without a card and without a trial — there is no
+ * trial, and no day on which anything stops working.
  *
- * The figures below are the ones the redesign canvas fixed. They are not
- * published anywhere public and nothing here invents a number.
+ * No payment processor is wired up yet. When keys exist, the upgrade goes
+ * through this module and nowhere else, so there is exactly one place to
+ * replace.
+ *
+ * The figures below are the studio's own decision. They are not published on
+ * the public website, and nothing here invents a number.
  */
+
+/** Ceiling of the tier, and what it costs per month for the whole company. */
+export type Tier = {
+  /** Highest lead count still on this tier; null is the top tier. */
+  upTo: number | null;
+  monthlyExclVat: number;
+  /** What this tier is called in a sentence. */
+  name: string;
+};
 
 export const PLAN = {
   currency: "EUR",
-  /** One price for the whole company, not per seat. */
-  monthlyExclVat: 14.99,
   vatRate: 0.21,
-  vatAmount: 3.15,
-  monthlyInclVat: 18.14,
-  dueToday: 0,
-  trialDays: 14,
+  /** One price for the whole company, never per seat. */
+  tiers: [
+    { upTo: 500, monthlyExclVat: 0, name: "Free" },
+    { upTo: 5_000, monthlyExclVat: 14.99, name: "Growing" },
+    { upTo: null, monthlyExclVat: 39.99, name: "Full" },
+  ] as const satisfies readonly Tier[],
 } as const;
+
+export const FREE_LEADS = PLAN.tiers[0].upTo;
 
 /** True once a publishable key is configured for the browser build. */
 export const isBillingConfigured = Boolean(
   typeof import.meta !== "undefined" && import.meta.env?.["VITE_STRIPE_PUBLISHABLE_KEY"],
 );
 
-export type PaymentMethod =
-  "apple_pay" | "google_pay" | "link" | "card" | "bancontact" | "ideal" | "sepa_debit";
-
-export type BillingAddress = {
-  fullName: string;
-  street: string;
-  extra?: string;
-  postcode: string;
-  city: string;
-  country: string;
-};
-
-export type BusinessDetails = {
-  companyName: string;
-  vatNumber: string;
-};
-
-export type SubscriptionIntent = {
-  method: PaymentMethod;
-  address: BillingAddress;
-  business?: BusinessDetails | undefined;
-};
-
-export type SubscriptionResult =
-  | { status: "started"; trialEndsOn: Date; firstChargeOn: Date }
-  | { status: "stub"; trialEndsOn: Date; firstChargeOn: Date; reason: string };
-
-/**
- * Start the subscription with its 14 free days.
- *
- * Replace the body — not the callers — when Stripe keys exist: create the
- * customer, attach the payment method, open the subscription with
- * `trial_period_days: PLAN.trialDays`, and return `status: "started"`.
- */
-export async function startSubscription(intent: SubscriptionIntent): Promise<SubscriptionResult> {
-  const schedule = trialSchedule(new Date());
-  if (!isBillingConfigured) {
-    return {
-      status: "stub",
-      trialEndsOn: schedule.endsOn,
-      firstChargeOn: schedule.firstChargeOn,
-      reason:
-        "No payment keys are configured, so nothing was sent to a payment provider and no card was stored.",
-    };
-  }
-  // Unreachable until a key exists; kept so the signature is the real one.
-  throw new Error(`Payments are configured but not implemented yet (method: ${intent.method}).`);
+/** The tier a workspace with this many leads is on. */
+export function tierFor(leads: number): Tier {
+  return PLAN.tiers.find((tier) => tier.upTo === null || leads <= tier.upTo) ?? PLAN.tiers.at(-1)!;
 }
 
-export type TrialSchedule = {
-  startedOn: Date;
-  /** Day 1 on the day you sign up, counting up to PLAN.trialDays. */
-  dayOfTrial: number;
-  endsOn: Date;
-  firstChargeOn: Date;
-  /** We warn three days before the first charge. */
-  reminderOn: Date;
-  daysLeft: number;
-  expired: boolean;
-};
+/** The tier after this one, or null at the top. */
+export function nextTier(leads: number): Tier | null {
+  const index = PLAN.tiers.indexOf(tierFor(leads) as (typeof PLAN.tiers)[number]);
+  return PLAN.tiers[index + 1] ?? null;
+}
 
-export function trialSchedule(startedAt: Date | string, now: Date = new Date()): TrialSchedule {
-  const startedOn = typeof startedAt === "string" ? new Date(startedAt) : startedAt;
-  const dayMs = 86_400_000;
-  const elapsed = Math.floor((startOfDay(now) - startOfDay(startedOn)) / dayMs);
-  const dayOfTrial = Math.min(PLAN.trialDays, Math.max(1, elapsed + 1));
-  const endsOn = addDays(startedOn, PLAN.trialDays);
-  return {
-    startedOn,
-    dayOfTrial,
-    endsOn,
-    firstChargeOn: addDays(startedOn, PLAN.trialDays),
-    reminderOn: addDays(startedOn, PLAN.trialDays - 3),
-    daysLeft: Math.max(0, PLAN.trialDays - elapsed),
-    expired: elapsed >= PLAN.trialDays,
-  };
+/** How many leads are left before the price changes, or null at the top tier. */
+export function leadsLeftOnTier(leads: number): number | null {
+  const { upTo } = tierFor(leads);
+  return upTo === null ? null : Math.max(0, upTo - leads);
+}
+
+export function withVat(amountExclVat: number) {
+  return Math.round(amountExclVat * (1 + PLAN.vatRate) * 100) / 100;
+}
+
+export function vatOn(amountExclVat: number) {
+  return Math.round(amountExclVat * PLAN.vatRate * 100) / 100;
 }
 
 /*
- * TODO — not decided, so not built: what happens on day 15 when a trial ends
- * and no payment method works. There is no lock, no read-only mode and no
- * degrade anywhere in this product, deliberately. Whoever decides that should
- * add it here and in the route guard, not scattered through the screens.
+ * TODO — not built, because nothing charges yet: the upgrade itself. When a
+ * workspace crosses FREE_LEADS it moves to the paid tier, and that is the one
+ * moment a card is asked for. Put the Stripe call here, next to the tiers it
+ * reads, and the prompt on the Plan panel in Settings. Nothing else in this
+ * product locks, degrades or goes read-only, deliberately.
  */
-
-function startOfDay(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-}
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
 
 /** "25 November", the way the canvas writes a billing date. */
 export function billingDate(date: Date, language: "nl" | "en" = "en") {

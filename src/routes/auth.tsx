@@ -14,7 +14,7 @@ import {
   primaryClass,
 } from "@/components/AuthSplit";
 import { SIBLING_PRODUCT as SIBLING } from "@/components/brand";
-import { PLAN } from "@/lib/billing";
+import { FREE_LEADS } from "@/lib/billing";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -298,7 +298,7 @@ function SignIn() {
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="text-[13px] font-semibold text-ink">Nobody here uses it yet?</span>
                 <span className="text-[12px] text-body-quiet">
-                  {`Start a company, free for ${PLAN.trialDays} days`}
+                  {`Start a company, free up to ${FREE_LEADS} leads`}
                 </span>
               </span>
               <svg

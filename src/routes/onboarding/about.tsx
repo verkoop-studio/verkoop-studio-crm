@@ -10,7 +10,6 @@ import {
 } from "@/components/Onboarding";
 import { Panel } from "@/components/sales-ui";
 import { readDraft, sellingOutcome, writeDraft, type SellingAnswers } from "@/lib/onboarding";
-import { trialSchedule } from "@/lib/billing";
 
 export const Route = createFileRoute("/onboarding/about")({
   head: () => ({ meta: [{ title: "How you sell | Sales" }] }),
@@ -77,7 +76,6 @@ const QUESTIONS: Question[] = [
 function About() {
   const navigate = useNavigate();
   const draft = readDraft();
-  const day = draft.startedAt ? trialSchedule(draft.startedAt).dayOfTrial : 1;
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<SellingAnswers>(draft.answers ?? { kills: [], want: [] });
@@ -115,7 +113,7 @@ function About() {
 
   return (
     <OnboardingPage>
-      <OnboardingBar step={4} day={day} aside={<span>Three questions. Nothing to type.</span>} />
+      <OnboardingBar step={4} aside={<span>Three questions. Nothing to type.</span>} />
       <OnboardingBody width={700}>
         <div className="flex flex-col gap-1.5">
           <h1 className="m-0 text-[26px] font-bold tracking-[-0.055em] text-ink-strong">

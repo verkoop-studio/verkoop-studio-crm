@@ -10,6 +10,28 @@
  * looked up as a fixed string.
  */
 export const SALES_NL: Record<string, string> = {
+  /*
+   * Strings added with the empty states, the bin and the refresh notice.
+   * This dictionary is keyed on the exact English text node, so anything new
+   * on a screen is simply left in English for a Dutch reader until it appears
+   * here — which is how these came to be missing: they were written and
+   * checked with the interface in English.
+   */
+  "Clear the search": "Wis de zoekopdracht",
+  "(you)": "(jij)",
+  "Loading…": "Laden…",
+  "Role for": "Rol voor",
+  "Clear the filters": "Wis de filters",
+  "The bin is empty.": "De prullenbak is leeg.",
+  "Show everything": "Toon alles",
+  "No quotes filed yet.": "Nog geen offertes bewaard.",
+  "No contracts filed yet.": "Nog geen contracten bewaard.",
+  "No leads in this workspace yet, so there is nothing to file against.":
+    "Nog geen leads in deze werkruimte, dus er valt nog niets bij te bewaren.",
+  "Could not refresh just now, so this is the last data that loaded.":
+    "Kon net niet verversen, dus dit zijn de laatst geladen gegevens.",
+  "counting…": "tellen…",
+
   // The country a company bills from, on the second onboarding step.
   "Belgium, EUR, 21% VAT": "Belgi\u00eb, EUR, 21% btw",
   "Netherlands, EUR, 21% VAT": "Nederland, EUR, 21% btw",
@@ -760,6 +782,19 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
     (m) =>
       `Inclusief ${m[1]}% btw, dat is ${m[2]}, daarna elke maand op dezelfde dag. We mailen je op ${m[3]}, drie dagen vooraf, zodat het nooit een verrassing is.`,
   ],
+  // The search term is the reader's own word; only the sentence around it moves.
+  [/^Nothing matches (.+)\.$/, (m) => `Niets komt overeen met ${m[1] ?? ""}.`],
+  [
+    /^(\d+) more in (.+)$/,
+    (m) => {
+      const stage = m[2] ?? "";
+      return `nog ${m[1]} in ${SALES_NL[stage] ?? stage}`;
+    },
+  ],
+  [/^on (\d+) companies$/, (m) => `bij ${m[1]} bedrijven`],
+  [/^Role for (.+)$/, (m) => `Rol voor ${m[1] ?? ""}`],
+  // "uploaded by Tanguy, today, 412 kB" — the date is handled by the rule below.
+  [/^uploaded by (.+)$/, (m) => `geüpload door ${m[1] ?? ""}`],
   [/^came in through (.+)$/, (m) => `kwam binnen via ${CHANNEL_NL[m[1] ?? ""] ?? m[1] ?? ""}`],
   [/^(today|yesterday|never|\d+ days ago), (.+)$/, (m) => `${age(m[1] ?? "")}, ${m[2]}`],
   [

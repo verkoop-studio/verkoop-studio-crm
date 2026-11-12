@@ -302,9 +302,16 @@ function ProfileMenu({ compact = false }: { compact?: boolean }) {
           )}
         </span>
         <span className="flex min-w-0 flex-1 flex-col">
-          <span translate="no" className="truncate text-[13px] font-semibold text-ink">
-            {current?.name ?? "Loading…"}
-          </span>
+          {/* Same boundary as the file name on the import screen: the company
+              name is theirs and must not be rewritten; the placeholder is ours
+              and should follow the interface language. */}
+          {current ? (
+            <span translate="no" className="truncate text-[13px] font-semibold text-ink">
+              {current.name}
+            </span>
+          ) : (
+            <span className="truncate text-[13px] font-semibold text-ink">Loading…</span>
+          )}
           <span className="truncate text-[11px] text-body-quiet">
             <span translate="no">{firstName}</span> · {role}
           </span>

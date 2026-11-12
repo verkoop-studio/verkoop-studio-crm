@@ -8,7 +8,14 @@ import { pipelineQueryKey, usePipelineLeads, type Lead } from "@/hooks/use-pipel
 import { LeadCategoryFilter } from "@/components/LeadCategories";
 import { matchesLeadCategory, type LeadCategoryFilterValue } from "@/lib/lead-categories";
 import { PIPELINE_STEPS, STAGE_META, type Stage } from "@/lib/sales";
-import { ChannelGlyph, OwnerAvatar, Segmented, euro, lastTouch } from "@/components/sales-ui";
+import {
+  ChannelGlyph,
+  OwnerAvatar,
+  RefreshFailed,
+  Segmented,
+  euro,
+  lastTouch,
+} from "@/components/sales-ui";
 
 export const Route = createFileRoute("/_authenticated/prospectflow")({
   head: () => ({ meta: [{ title: "Prospect flow | Sales" }] }),
@@ -98,7 +105,8 @@ function ProspectFlow() {
       </p>
     );
   }
-  if (isError) {
+  // Same as the dashboard: only replace the board when there is nothing on it.
+  if (isError && all.length === 0) {
     return (
       <div role="alert" className="panel p-6 text-[13px]">
         Loading failed.{" "}
@@ -119,6 +127,7 @@ function ProspectFlow() {
 
   return (
     <div className="flex flex-col gap-3.5">
+      {isError && <RefreshFailed onRetry={() => void refetch()} />}
       {/* Top bar */}
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="flex flex-col gap-px">
@@ -336,7 +345,7 @@ function ProspectFlow() {
                       className="rounded-panel-inner border border-dashed px-2 py-2.5 text-[12px] font-semibold text-body-quiet"
                       style={{ background: "#fbfbfe", borderColor: "#dfe3f1" }}
                     >
-                      {more} more in {STAGE_META[step].short}
+                      {`${more} more in ${STAGE_META[step].short}`}
                     </button>
                   )}
 

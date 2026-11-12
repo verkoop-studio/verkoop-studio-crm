@@ -352,6 +352,9 @@ export const SALES_NL: Record<string, string> = {
   Manage: "Beheren",
   "New reporting token created": "Nieuw rapporteringstoken aangemaakt",
   Plan: "Abonnement",
+  "Show me where they came from": "Laat zien waar ze vandaan komen",
+  "They came from an ad or your site in the last 30 days. This app cannot tell you which ad, post or search brought them. Verkoop Studio Performance can.":
+    "Ze kwamen de laatste 30 dagen van een advertentie of van je site. Deze app kan je niet zeggen welke advertentie, post of zoekopdracht hen bracht. Verkoop Studio Performance wel.",
   "counting your leads…": "je leads tellen…",
   "Everyone in the company is included, however many people you invite. Nothing locks, goes read-only or stops working when the count moves.":
     "Iedereen in het bedrijf zit erbij, hoeveel mensen je ook uitnodigt. Er gaat niets op slot, niets wordt alleen-lezen en niets stopt wanneer het aantal verandert.",
@@ -726,6 +729,10 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
   // JSX interpolation never reaches the translator, because it arrives as two.
   [/^Question (\d+) of (\d+)$/, (m) => `Vraag ${m[1]} van ${m[2]}`],
   [/^Free until (\d+) leads$/, (m) => `Gratis tot ${m[1]} leads`],
+  [
+    /^(\d+) (?:lead|leads) with no campaign on them$/,
+    (m) => `${m[1]} ${m[1] === "1" ? "lead" : "leads"} zonder campagne erbij`,
+  ],
   [/^(.+) a month, for the whole company$/, (m) => `${m[1]} per maand, voor het hele bedrijf`],
   [
     /^(\d+) of (\d+) leads\. (\d+) more and it becomes (.+) a month, excl\. VAT\.$/,

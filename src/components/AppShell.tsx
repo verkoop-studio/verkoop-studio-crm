@@ -7,7 +7,9 @@ import { resetCompanyContext } from "@/lib/company-context";
 import { useCompanies } from "@/hooks/use-companies";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { labelFor, ROLES } from "@/lib/sales";
-import { Mark } from "@/components/brand";
+import { Mark, SIBLING_PRODUCT } from "@/components/brand";
+import { useServerFn } from "@tanstack/react-start";
+import { getCurrentExportToken } from "@/lib/current-export-token.functions";
 import { DashboardIcon, LeadsIcon, FlowIcon, DocumentsIcon } from "@/components/nav-icons";
 import { initialsOf } from "@/components/sales-ui";
 
@@ -75,7 +77,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col gap-3">
+          <PerformancePitch />
           <ProfileMenu />
         </div>
       </aside>
@@ -86,6 +89,74 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
     </div>
+  );
+}
+
+/*
+ * The one thing this product cannot tell you, at the foot of every screen.
+ *
+ * The CRM knows a lead arrived through an ad or the website form. It does not
+ * know which ad, which post or which search brought it, because nothing on the
+ * customer's site tells it. That is the sibling product's whole job, so the
+ * card earns its place by counting the leads in this workspace that have the
+ * gap, and says nothing at all when there are none.
+ *
+ * Admin only: the connection state behind it is admin-read, and buying a
+ * second product is an admin's call either way.
+ */
+function PerformancePitch() {
+  const { data: user } = useCurrentUser();
+  const isAdmin = user?.roles.includes("admin") ?? false;
+  const fetchToken = useServerFn(getCurrentExportToken);
+
+  const { data: connection } = useQuery({
+    queryKey: ["current-export-token"],
+    enabled: isAdmin,
+    queryFn: () => fetchToken({ data: undefined }),
+  });
+
+  const { data: unattributed } = useQuery({
+    queryKey: ["leads", "unattributed"],
+    enabled: isAdmin && connection != null && !connection.token,
+    staleTime: 300_000,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+      const { count, error } = await supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .is("campaign", null)
+        .in("source", ["ads", "website"])
+        .gte("created_at", since);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  if (!isAdmin || connection?.token || !unattributed) return null;
+
+  return (
+    <aside
+      aria-label={SIBLING_PRODUCT}
+      className="flex flex-col gap-2 rounded-panel border border-accent-tint-line bg-accent-tint-quiet px-[13px] py-3"
+    >
+      <span className="text-[12px] font-semibold text-ink">
+        {`${unattributed} ${unattributed === 1 ? "lead" : "leads"} with no campaign on them`}
+      </span>
+      {/* One text node, not three: a sentence split by an interpolation never
+          reaches the translator, because it arrives in pieces. */}
+      <span className="text-[11px] leading-[1.55] text-body-quiet">
+        {`They came from an ad or your site in the last 30 days. This app cannot tell you which ad, post or search brought them. ${SIBLING_PRODUCT} can.`}
+      </span>
+      <a
+        href="https://verkoop.studio/contact?platform=dashboard"
+        target="_blank"
+        rel="noreferrer"
+        className="flex min-h-9 items-center justify-center rounded-control bg-panel px-3 text-[12px] font-semibold text-accent-ink no-underline shadow-raised"
+      >
+        Show me where they came from
+      </a>
+    </aside>
   );
 }
 

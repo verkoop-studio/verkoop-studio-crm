@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase, isDatabaseConfigured } from "@/integrations/supabase/client";
 import { Wordmark } from "@/components/brand";
+import { useLanguage } from "@/hooks/use-language";
 import { Stepper } from "@/components/Onboarding";
 import {
   GoogleMark,
@@ -29,7 +30,8 @@ function Account() {
   const [shown, setShown] = useState(false);
   const [busy, setBusy] = useState(false);
   const strength = passwordStrength(password);
-  const firstCharge = billingDate(trialSchedule(new Date()).firstChargeOn);
+  const { language } = useLanguage();
+  const firstCharge = billingDate(trialSchedule(new Date()).firstChargeOn, language);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -73,7 +75,7 @@ function Account() {
         <div className="flex flex-col gap-3 rounded-panel border border-dark-line bg-dark-raised px-[22px] py-5">
           <span className="flex flex-wrap items-baseline gap-2.5">
             <span className="text-[30px] font-bold tracking-[-0.05em] text-white">
-              {PLAN.trialDays} days free
+              {`${PLAN.trialDays} days free`}
             </span>
             <span
               className="rounded-pill px-2.5 py-1 text-[12px] font-semibold"

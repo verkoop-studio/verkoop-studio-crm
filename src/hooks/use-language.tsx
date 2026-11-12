@@ -439,10 +439,21 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     };
     const timer = window.setTimeout(() => {
       translateTree(document.body);
+      // The tab is part of the page. <title> lives in <head>, which the body
+      // walk never reaches, so every route announced itself in English.
+      const title = document.head.querySelector("title");
+      if (title) translateTree(title);
       observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) mutation.addedNodes.forEach(translateTree);
+        for (const mutation of mutations) {
+          // Text that changes in place — a panel swapping its copy, a count
+          // ticking over — fires characterData with no added nodes, so it was
+          // never translated and sat there in English until a remount.
+          if (mutation.type === "characterData") translateTree(mutation.target);
+          else mutation.addedNodes.forEach(translateTree);
+        }
       });
       observer.observe(document.body, { childList: true, characterData: true, subtree: true });
+      observer.observe(document.head, { childList: true, characterData: true, subtree: true });
     }, 250);
     return () => {
       window.clearTimeout(timer);

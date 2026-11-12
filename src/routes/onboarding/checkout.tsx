@@ -115,8 +115,8 @@ function Checkout() {
 
     if (!workspace.ok) {
       setResult(
-        workspace.reason === "not_enabled"
-          ? "Your account exists and nothing was charged, but opening a new workspace is still reserved to Verkoop Studio. Ask them to open it and everything you filled in here is waiting."
+        workspace.reason === "limit"
+          ? "You have already opened five workspaces, so this one was not opened and nothing was charged. Ask Verkoop Studio if you need another."
           : `The workspace could not be opened: ${workspace.message}. Nothing was charged.`,
       );
       return;

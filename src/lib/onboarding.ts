@@ -65,24 +65,23 @@ export function clearDraft() {
 }
 
 export type WorkspaceResult =
-  { ok: true; id: string } | { ok: false; reason: "not_enabled" | "failed"; message: string };
+  { ok: true; id: string } | { ok: false; reason: "limit" | "failed"; message: string };
 
 /**
  * Create the workspace the self-serve flow has been collecting.
  *
- * One call, one place to change. `create_crm_company` is currently reserved
- * to Verkoop Studio's own administrators, so for anyone else this reports
- * `not_enabled` rather than failing somewhere deep in the last step: the
- * account exists, nothing was charged, and a person has to open the company.
- * Switching self-serve on is a database policy decision, not a screen.
+ * One call, one place to change. Anyone signed in may open a workspace and
+ * becomes its administrator; the only refusal left is the per-person cap in
+ * `crm_private.create_company`, reported as `limit` so the last step can say
+ * so in the reader's language instead of surfacing a database sentence.
  */
 export async function createWorkspace(name: string): Promise<WorkspaceResult> {
   const { data, error } = await supabase.rpc("create_crm_company", { _name: name });
   if (error) {
-    const notAllowed = /administrator/i.test(error.message);
+    const capped = /already opened five workspaces/i.test(error.message);
     return {
       ok: false,
-      reason: notAllowed ? "not_enabled" : "failed",
+      reason: capped ? "limit" : "failed",
       message: error.message,
     };
   }

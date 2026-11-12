@@ -114,11 +114,7 @@ function Checkout() {
     setBusy(false);
 
     if (!workspace.ok) {
-      setResult(
-        workspace.reason === "limit"
-          ? "You have already opened five workspaces, so this one was not opened and nothing was charged. Ask Verkoop Studio if you need another."
-          : `The workspace could not be opened: ${workspace.message}. Nothing was charged.`,
-      );
+      setResult(`The workspace could not be opened: ${workspace.message}. Nothing was charged.`);
       return;
     }
 

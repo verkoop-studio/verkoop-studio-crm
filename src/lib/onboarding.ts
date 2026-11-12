@@ -65,26 +65,18 @@ export function clearDraft() {
 }
 
 export type WorkspaceResult =
-  { ok: true; id: string } | { ok: false; reason: "limit" | "failed"; message: string };
+  { ok: true; id: string } | { ok: false; reason: "failed"; message: string };
 
 /**
  * Create the workspace the self-serve flow has been collecting.
  *
  * One call, one place to change. Anyone signed in may open a workspace and
- * becomes its administrator; the only refusal left is the per-person cap in
- * `crm_private.create_company`, reported as `limit` so the last step can say
- * so in the reader's language instead of surfacing a database sentence.
+ * becomes its administrator, with no limit on how many — so the only way this
+ * fails now is the database being unreachable or refusing the name.
  */
 export async function createWorkspace(name: string): Promise<WorkspaceResult> {
   const { data, error } = await supabase.rpc("create_crm_company", { _name: name });
-  if (error) {
-    const capped = /already opened five workspaces/i.test(error.message);
-    return {
-      ok: false,
-      reason: capped ? "limit" : "failed",
-      message: error.message,
-    };
-  }
+  if (error) return { ok: false, reason: "failed", message: error.message };
   return { ok: true, id: data as string };
 }
 

@@ -10,10 +10,6 @@
  * looked up as a fixed string.
  */
 export const SALES_NL: Record<string, string> = {
-  // The one refusal the last step still has.
-  "You have already opened five workspaces, so this one was not opened and nothing was charged. Ask Verkoop Studio if you need another.":
-    "Je hebt al vijf werkruimtes geopend, dus deze is niet geopend en er is niets afgeschreven. Vraag Verkoop Studio als je er nog een nodig hebt.",
-
   // The country a company bills from, on the second onboarding step.
   "Belgium, EUR, 21% VAT": "Belgi\u00eb, EUR, 21% btw",
   "Netherlands, EUR, 21% VAT": "Nederland, EUR, 21% btw",

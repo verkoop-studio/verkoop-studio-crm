@@ -8,9 +8,9 @@ import {
   stepButtonClass,
   stepButtonStyle,
 } from "@/components/Onboarding";
-import { Panel, euroCents, initialsOf } from "@/components/sales-ui";
+import { Panel, initialsOf } from "@/components/sales-ui";
 import { ROLES, type Role } from "@/lib/sales";
-import { PLAN, trialSchedule } from "@/lib/billing";
+import { FREE_LEADS } from "@/lib/billing";
 import { readDraft, writeDraft, type Invite } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/team")({
@@ -28,7 +28,6 @@ const ROLE_DUTIES: Record<Role, string> = {
 function Team() {
   const navigate = useNavigate();
   const draft = readDraft();
-  const day = draft.startedAt ? trialSchedule(draft.startedAt).dayOfTrial : 1;
   const [people, setPeople] = useState<Invite[]>(
     draft.invites?.length ? draft.invites : [{ email: "", role: "team_leader" }],
   );
@@ -47,10 +46,9 @@ function Team() {
     <OnboardingPage>
       <OnboardingBar
         step={3}
-        day={day}
         aside={
           <>
-            <span>{`Day ${day} of ${PLAN.trialDays} free`}</span>
+            <span>{`Free until ${FREE_LEADS} leads`}</span>
             <Link to="/onboarding/about" className="text-[12px] font-semibold">
               Skip
             </Link>
@@ -63,9 +61,8 @@ function Team() {
             Who else sells here?
           </h1>
           <p className="m-0 text-[14px] text-body-quiet">
-            {`Everyone is included in the ${euroCents(
-              PLAN.monthlyExclVat,
-            )}. Adding people costs nothing, so the only reason to wait is that you are not sure yet.`}
+            Everyone is included, whatever the workspace costs. People are never charged for here,
+            so the only reason to wait is that you are not sure yet.
           </p>
         </div>
 

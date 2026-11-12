@@ -29,7 +29,6 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as OauthConsentRouteImport } from './routes/oauth.consent'
 import { Route as OnboardingAboutRouteImport } from './routes/onboarding/about'
 import { Route as OnboardingAccountRouteImport } from './routes/onboarding/account'
-import { Route as OnboardingCheckoutRouteImport } from './routes/onboarding/checkout'
 import { Route as OnboardingCompanyRouteImport } from './routes/onboarding/company'
 import { Route as OnboardingTeamRouteImport } from './routes/onboarding/team'
 import { Route as OnboardingVideoRouteImport } from './routes/onboarding/video'
@@ -139,11 +138,6 @@ const OnboardingAccountRoute = OnboardingAccountRouteImport.update({
   path: '/onboarding/account',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingCheckoutRoute = OnboardingCheckoutRouteImport.update({
-  id: '/onboarding/checkout',
-  path: '/onboarding/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OnboardingCompanyRoute = OnboardingCompanyRouteImport.update({
   id: '/onboarding/company',
   path: '/onboarding/company',
@@ -203,7 +197,6 @@ export interface FileRoutesByFullPath {
   '/oauth/consent': typeof OauthConsentRoute
   '/onboarding/about': typeof OnboardingAboutRoute
   '/onboarding/account': typeof OnboardingAccountRoute
-  '/onboarding/checkout': typeof OnboardingCheckoutRoute
   '/onboarding/company': typeof OnboardingCompanyRoute
   '/onboarding/team': typeof OnboardingTeamRoute
   '/onboarding/video': typeof OnboardingVideoRoute
@@ -232,7 +225,6 @@ export interface FileRoutesByTo {
   '/oauth/consent': typeof OauthConsentRoute
   '/onboarding/about': typeof OnboardingAboutRoute
   '/onboarding/account': typeof OnboardingAccountRoute
-  '/onboarding/checkout': typeof OnboardingCheckoutRoute
   '/onboarding/company': typeof OnboardingCompanyRoute
   '/onboarding/team': typeof OnboardingTeamRoute
   '/onboarding/video': typeof OnboardingVideoRoute
@@ -263,7 +255,6 @@ export interface FileRoutesById {
   '/oauth/consent': typeof OauthConsentRoute
   '/onboarding/about': typeof OnboardingAboutRoute
   '/onboarding/account': typeof OnboardingAccountRoute
-  '/onboarding/checkout': typeof OnboardingCheckoutRoute
   '/onboarding/company': typeof OnboardingCompanyRoute
   '/onboarding/team': typeof OnboardingTeamRoute
   '/onboarding/video': typeof OnboardingVideoRoute
@@ -294,7 +285,6 @@ export interface FileRouteTypes {
     | '/oauth/consent'
     | '/onboarding/about'
     | '/onboarding/account'
-    | '/onboarding/checkout'
     | '/onboarding/company'
     | '/onboarding/team'
     | '/onboarding/video'
@@ -323,7 +313,6 @@ export interface FileRouteTypes {
     | '/oauth/consent'
     | '/onboarding/about'
     | '/onboarding/account'
-    | '/onboarding/checkout'
     | '/onboarding/company'
     | '/onboarding/team'
     | '/onboarding/video'
@@ -353,7 +342,6 @@ export interface FileRouteTypes {
     | '/oauth/consent'
     | '/onboarding/about'
     | '/onboarding/account'
-    | '/onboarding/checkout'
     | '/onboarding/company'
     | '/onboarding/team'
     | '/onboarding/video'
@@ -376,7 +364,6 @@ export interface RootRouteChildren {
   OauthConsentRoute: typeof OauthConsentRoute
   OnboardingAboutRoute: typeof OnboardingAboutRoute
   OnboardingAccountRoute: typeof OnboardingAccountRoute
-  OnboardingCheckoutRoute: typeof OnboardingCheckoutRoute
   OnboardingCompanyRoute: typeof OnboardingCompanyRoute
   OnboardingTeamRoute: typeof OnboardingTeamRoute
   OnboardingVideoRoute: typeof OnboardingVideoRoute
@@ -527,13 +514,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/onboarding/checkout': {
-      id: '/onboarding/checkout'
-      path: '/onboarding/checkout'
-      fullPath: '/onboarding/checkout'
-      preLoaderRoute: typeof OnboardingCheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/onboarding/company': {
       id: '/onboarding/company'
       path: '/onboarding/company'
@@ -627,7 +607,6 @@ const rootRouteChildren: RootRouteChildren = {
   OauthConsentRoute: OauthConsentRoute,
   OnboardingAboutRoute: OnboardingAboutRoute,
   OnboardingAccountRoute: OnboardingAccountRoute,
-  OnboardingCheckoutRoute: OnboardingCheckoutRoute,
   OnboardingCompanyRoute: OnboardingCompanyRoute,
   OnboardingTeamRoute: OnboardingTeamRoute,
   OnboardingVideoRoute: OnboardingVideoRoute,

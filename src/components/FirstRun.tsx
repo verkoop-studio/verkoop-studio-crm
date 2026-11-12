@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCompanyId } from "@/lib/company-context";
 import { useCompanies } from "@/hooks/use-companies";
 import { readDraft } from "@/lib/onboarding";
-import { PLAN, trialSchedule } from "@/lib/billing";
+import { FREE_LEADS, leadsLeftOnTier, tierFor } from "@/lib/billing";
 import { Panel } from "@/components/sales-ui";
 
 /*
@@ -25,7 +25,7 @@ export function FirstRun() {
   const { data: facts } = useQuery({
     queryKey: ["first-run", companyId],
     queryFn: async () => {
-      const [members, imports, created] = await Promise.all([
+      const [members, imports, created, leads] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }),
         supabase.from("import_batches").select("id", { count: "exact", head: true }),
         supabase
@@ -33,16 +33,19 @@ export function FirstRun() {
           .select("created_at")
           .eq("id", companyId ?? "")
           .maybeSingle(),
+        supabase.from("leads").select("id", { count: "exact", head: true }).is("deleted_at", null),
       ]);
       return {
         members: members.count ?? 1,
         imports: imports.count ?? 0,
         createdAt: created.data?.created_at ?? null,
+        leads: leads.count ?? 0,
       };
     },
   });
 
-  const trial = facts?.createdAt ? trialSchedule(facts.createdAt) : null;
+  const tier = facts ? tierFor(facts.leads) : null;
+  const left = facts ? leadsLeftOnTier(facts.leads) : null;
 
   const setup = [
     {
@@ -140,7 +143,7 @@ export function FirstRun() {
 
   return (
     <div className="flex flex-col gap-3.5">
-      {/* Top bar: how far the set-up is, and the trial it is running inside */}
+      {/* Top bar: how far the set-up is, and what the workspace costs today */}
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="flex min-h-10 items-center gap-2.5 rounded-control border border-border bg-panel px-[13px] py-2">
           <span
@@ -163,7 +166,9 @@ export function FirstRun() {
           </span>
         </span>
 
-        {trial && (
+        {/* What the workspace costs today, not a clock. On the free tier that is
+            nothing, and the number beside it is how much room is left. */}
+        {tier && tier.monthlyExclVat === 0 && (
           <span className="flex min-h-10 items-center gap-2 rounded-control border border-good-line bg-good-wash px-[13px] py-2 text-[12px] font-medium text-good">
             <svg
               width="14"
@@ -176,10 +181,11 @@ export function FirstRun() {
               strokeLinejoin="round"
               aria-hidden="true"
             >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
+              <path d="M20 6 9 17l-5-5" />
             </svg>
-            {`Day ${trial.dayOfTrial} of ${PLAN.trialDays} free`}
+            {left === FREE_LEADS
+              ? `Free until ${FREE_LEADS} leads`
+              : `Free · ${left} of ${FREE_LEADS} leads left`}
           </span>
         )}
 

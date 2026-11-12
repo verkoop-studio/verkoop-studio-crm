@@ -10,7 +10,6 @@ import {
 } from "@/components/Onboarding";
 import { Panel } from "@/components/sales-ui";
 import { readDraft, writeDraft, type FillWith } from "@/lib/onboarding";
-import { trialSchedule } from "@/lib/billing";
 
 export const Route = createFileRoute("/onboarding/company")({
   head: () => ({ meta: [{ title: "Your company | Sales" }] }),
@@ -87,7 +86,6 @@ function Company() {
   const [name, setName] = useState(draft.companyName ?? "");
   const [country, setCountry] = useState(draft.country ?? COUNTRIES[0]!);
   const [pick, setPick] = useState<FillWith>(draft.fillWith ?? "csv");
-  const day = draft.startedAt ? trialSchedule(draft.startedAt).dayOfTrial : 1;
   const panel = PANELS[pick];
 
   const next = () => {
@@ -97,7 +95,7 @@ function Company() {
 
   return (
     <OnboardingPage>
-      <OnboardingBar step={2} day={day} />
+      <OnboardingBar step={2} />
       <OnboardingBody>
         <div className="flex flex-col gap-1.5">
           <h1 className="m-0 text-[26px] font-bold tracking-[-0.055em] text-ink-strong">

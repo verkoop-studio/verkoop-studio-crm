@@ -9,7 +9,8 @@ import { useCompanies } from "@/hooks/use-companies";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { usePipelineLeads } from "@/hooks/use-pipeline-leads";
 import { useLanguage } from "@/hooks/use-language";
-import { OwnerAvatar, euro } from "@/components/sales-ui";
+import { OwnerAvatar, euro, euroCents } from "@/components/sales-ui";
+import { leadsLeftOnTier, nextTier, tierFor } from "@/lib/billing";
 import { SIBLING_PRODUCT } from "@/components/brand";
 import { CURRENT_EXPORT_PATH } from "@/lib/current-export";
 import { getInboundToken, rotateInboundToken } from "@/lib/inbound-token.functions";
@@ -108,6 +109,9 @@ function SettingsPage() {
         <LanguageRow />
         <WebsiteFormRow isAdmin={isAdmin} />
         <PerformanceRow isAdmin={isAdmin} />
+
+        <GroupLabel>Plan</GroupLabel>
+        <PlanRow />
 
         <GroupLabel>People</GroupLabel>
         <RolesRow />
@@ -236,6 +240,53 @@ function LanguageRow() {
         <option value="nl">Nederlands</option>
         <option value="en">English</option>
       </select>
+    </Row>
+  );
+}
+
+/*
+ * What this workspace costs, and why.
+ *
+ * The price is a function of one number — how many leads are in the contact
+ * base — so the row states that number, the tier it puts you on, and what the
+ * next one costs. Nothing charges yet; when it does, the prompt belongs here,
+ * beside the count that triggers it.
+ */
+function PlanRow() {
+  const { data: leads } = useQuery({
+    queryKey: ["leads", "count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  if (leads == null) return <Row title="Plan" note="counting your leads…" />;
+
+  const tier = tierFor(leads);
+  const next = nextTier(leads);
+  const left = leadsLeftOnTier(leads);
+  const price = tier.monthlyExclVat === 0 ? "Free" : `${euroCents(tier.monthlyExclVat)} a month`;
+
+  return (
+    <Row
+      title={`${price}, for the whole company`}
+      note={
+        next
+          ? `${leads} of ${tier.upTo} leads. ${left} more and it becomes ${euroCents(
+              next.monthlyExclVat,
+            )} a month, excl. VAT.`
+          : `${leads} leads. This is the top tier; the price does not go up again.`
+      }
+    >
+      <span className="flex-[0_1_260px] text-[11px] leading-[1.6] text-caption">
+        Everyone in the company is included, however many people you invite. Nothing locks, goes
+        read-only or stops working when the count moves.
+      </span>
     </Row>
   );
 }

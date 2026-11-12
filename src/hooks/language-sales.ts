@@ -68,7 +68,6 @@ export const SALES_NL: Record<string, string> = {
   "Your team | Sales": "Je team | Sales",
   "How you sell | Sales": "Hoe je verkoopt | Sales",
   "Setting up your workspace | Sales": "Je werkruimte wordt klaargezet | Sales",
-  "Start your trial | Sales": "Start je proefperiode | Sales",
 
   /* ── Chrome ──────────────────────────────────────────────────────────── */
   Sales: "Sales",
@@ -352,6 +351,11 @@ export const SALES_NL: Record<string, string> = {
   "Not connected": "Niet verbonden",
   Manage: "Beheren",
   "New reporting token created": "Nieuw rapporteringstoken aangemaakt",
+  Plan: "Abonnement",
+  "counting your leads…": "je leads tellen…",
+  "Everyone in the company is included, however many people you invite. Nothing locks, goes read-only or stops working when the count moves.":
+    "Iedereen in het bedrijf zit erbij, hoeveel mensen je ook uitnodigt. Er gaat niets op slot, niets wordt alleen-lezen en niets stopt wanneer het aantal verandert.",
+  "Free, for the whole company": "Gratis, voor het hele bedrijf",
   People: "Mensen",
   Admin: "Beheerder",
   "Team leader": "Teamleider",
@@ -586,11 +590,10 @@ export const SALES_NL: Record<string, string> = {
   Account: "Account",
   Team: "Team",
   You: "Jij",
-  Checkout: "Afrekenen",
   "Stop losing deals in a spreadsheet.": "Verlies geen deals meer in een rekenblad.",
-  "No card today": "Vandaag geen kaart",
-  "Then €14,99 a month for the whole company, excl. VAT. Not per person.":
-    "Daarna €14,99 per maand voor het hele bedrijf, excl. btw. Niet per persoon.",
+  "No card needed": "Geen kaart nodig",
+  Free: "Gratis",
+  "Open my workspace": "Open mijn werkruimte",
   "Every lead, every stage, in one list": "Elke lead, elke fase, in één lijst",
   "Unlimited people, one price for the company":
     "Onbeperkt aantal mensen, één prijs voor het bedrijf",
@@ -636,8 +639,8 @@ export const SALES_NL: Record<string, string> = {
     "Niets hiervan ligt vast. De bedrijfsnaam, het land en hoe leads binnenkomen staan daarna allemaal bij Instellingen.",
   Skip: "Overslaan",
   "Who else sells here?": "Wie verkoopt hier nog?",
-  "Everyone is included in the €14,99. Adding people costs nothing, so the only reason to wait is that you are not sure yet.":
-    "Iedereen zit in de €14,99. Mensen toevoegen kost niets, dus de enige reden om te wachten is dat je het nog niet zeker weet.",
+  "Everyone is included, whatever the workspace costs. People are never charged for here, so the only reason to wait is that you are not sure yet.":
+    "Iedereen zit erbij, wat de werkruimte ook kost. Mensen kosten hier nooit iets, dus de enige reden om te wachten is dat je het nog niet zeker weet.",
   "Add another": "Nog iemand",
   "Remove this row": "Deze rij verwijderen",
   "Plenty for now. The rest can come from Settings, in bulk if you like.":
@@ -696,49 +699,6 @@ export const SALES_NL: Record<string, string> = {
   "The film is not in this build yet. Everything else carries on regardless.":
     "De film staat nog niet in deze build. De rest loopt gewoon door.",
   "Play the 45 second explainer": "Speel de uitleg van 45 seconden af",
-
-  /* ── Checkout ────────────────────────────────────────────────────────── */
-  "Handled by Stripe. We never see your card.": "Afgehandeld door Stripe. Wij zien je kaart nooit.",
-  "Nothing is charged today. We ask for a card so it does not stop working on day 15.":
-    "Vandaag wordt er niets aangerekend. We vragen een kaart zodat het op dag 15 niet stopt.",
-  "No payment keys are configured in this build, so this form collects your details and sends them nowhere. Nothing is stored, nothing is charged, and your workspace opens anyway.":
-    "Er zijn geen betaalsleutels ingesteld in deze build, dus dit formulier verzamelt je gegevens en stuurt ze nergens heen. Er wordt niets bewaard, niets aangerekend, en je werkruimte gaat toch open.",
-  Fastest: "Snelst",
-  "Set up with Apple Pay": "Instellen met Apple Pay",
-  "Set up with Google Pay": "Instellen met Google Pay",
-  "Set up with Link": "Instellen met Link",
-  "One tap. Stripe remembers the card, we never receive it.":
-    "Eén tik. Stripe onthoudt de kaart, wij krijgen ze nooit.",
-  "or pay another way": "of betaal op een andere manier",
-  "Payment method": "Betaalmethode",
-  Card: "Kaart",
-  "SEPA debit": "SEPA-domiciliëring",
-  "Card number": "Kaartnummer",
-  Expiry: "Vervaldatum",
-  "Your bank": "Je bank",
-  "Choose your bank": "Kies je bank",
-  "Billing address": "Facturatieadres",
-  "it goes on the invoice, and it sets the VAT rate":
-    "het komt op de factuur en bepaalt het btw-tarief",
-  "Full name": "Volledige naam",
-  "Street and number": "Straat en nummer",
-  Box: "Bus",
-  optional: "optioneel",
-  Postcode: "Postcode",
-  "I am buying as a business": "Ik koop als onderneming",
-  "VAT number": "Btw-nummer",
-  "Registered in another EU country? Stripe validates the number and applies the reverse charge where it applies, so the VAT line disappears from your invoice.":
-    "Geregistreerd in een ander EU-land? Stripe controleert het nummer en past de verlegging toe waar die geldt, zodat de btw-lijn van je factuur verdwijnt.",
-  "Secured and processed by Stripe": "Beveiligd en verwerkt door Stripe",
-  "The whole company, monthly": "Het hele bedrijf, per maand",
-  "Due today": "Vandaag te betalen",
-  "Opening your workspace…": "Je werkruimte openen…",
-  "Workspace opened. No payment was taken.": "Werkruimte geopend. Er is niets afgeschreven.",
-  "Workspace opened. Your trial has started.": "Werkruimte geopend. Je proefperiode is begonnen.",
-  "Your account exists and nothing was charged, but opening a new workspace is still reserved to Verkoop Studio. Ask them to open it and everything you filled in here is waiting.":
-    "Je account bestaat en er is niets aangerekend, maar een nieuwe werkruimte openen is voorlopig voorbehouden aan Verkoop Studio. Vraag hen ze te openen; alles wat je hier invulde staat klaar.",
-  "Cancelling is a button in Settings. No email, no call, no notice period, and your leads export to CSV on the way out.":
-    "Opzeggen is een knop bij Instellingen. Geen mail, geen telefoon, geen opzegtermijn, en je leads gaan er als CSV mee naar buiten.",
 };
 
 /** The channel marks, as the lead sheet writes them mid-sentence. */
@@ -762,25 +722,40 @@ const age = (value: string) => {
 
 /** The lines that carry a figure, so a fixed lookup cannot reach them. */
 export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
-  [
-    /^Adding people never changes this number\. Three today or thirty next year, it is (.+) for the company\.$/,
-    (m) =>
-      `Mensen toevoegen verandert dit bedrag nooit. Drie vandaag of dertig volgend jaar, het is ${m[1]} voor het hele bedrijf.`,
-  ],
-  [/^Day (\d+) of (\d+) free$/, (m) => `Dag ${m[1]} van ${m[2]} gratis`],
   // Onboarding. Each of these is one text node now: a sentence split across a
   // JSX interpolation never reaches the translator, because it arrives as two.
-  [/^(\d+) day trial$/, (m) => `${m[1]} dagen gratis`],
   [/^Question (\d+) of (\d+)$/, (m) => `Vraag ${m[1]} van ${m[2]}`],
-  [/^Then on (.+)$/, (m) => `Daarna op ${m[1]}`],
+  [/^Free until (\d+) leads$/, (m) => `Gratis tot ${m[1]} leads`],
+  [/^(.+) a month, for the whole company$/, (m) => `${m[1]} per maand, voor het hele bedrijf`],
+  [
+    /^(\d+) of (\d+) leads\. (\d+) more and it becomes (.+) a month, excl\. VAT\.$/,
+    (m) => `${m[1]} van ${m[2]} leads. Nog ${m[3]} en het wordt ${m[4]} per maand, excl. btw.`,
+  ],
+  [
+    /^(\d+) leads\. This is the top tier; the price does not go up again\.$/,
+    (m) => `${m[1]} leads. Dit is de hoogste trap; de prijs gaat niet meer omhoog.`,
+  ],
+  [/^Free up to (\d+) leads$/, (m) => `Gratis tot ${m[1]} leads`],
+  [
+    /^Start a company, free up to (\d+) leads$/,
+    (m) => `Start een bedrijf, gratis tot ${m[1]} leads`,
+  ],
+  [/^instead, free up to (\d+) leads\.$/, (m) => `in de plaats, gratis tot ${m[1]} leads.`],
+  [/^Nothing to pay until lead (\d+)$/, (m) => `Niets te betalen tot lead ${m[1]}`],
+  [/^Free · (\d+) of (\d+) leads left$/, (m) => `Gratis · nog ${m[1]} van ${m[2]} leads`],
+  [
+    /^Free up to (\d+) leads, then (.+) a month, and (.+) over (\d+) leads\. For the whole company, excl\. VAT\. Never per person\.$/,
+    (m) =>
+      `Gratis tot ${m[1]} leads, daarna ${m[2]} per maand, en ${m[3]} boven ${m[4]} leads. Voor het hele bedrijf, excl. btw. Nooit per persoon.`,
+  ],
+  [
+    /^No card, and nothing counting down\. Nothing is charged until your contact base passes (\d+) leads\.$/,
+    (m) =>
+      `Geen kaart, en niets dat aftelt. Er wordt niets aangerekend tot je contactenbestand voorbij ${m[1]} leads gaat.`,
+  ],
   [
     /^(.+), (\d+) (?:person|people)$/,
     (m) => `${m[1]}, ${m[2]} ${m[2] === "1" ? "persoon" : "personen"}`,
-  ],
-  [
-    /^Including (\d+)% VAT, which is (.+), then the same day each month\. We email you on (.+), three days before, so it is never a surprise\.$/,
-    (m) =>
-      `Inclusief ${m[1]}% btw, dat is ${m[2]}, daarna elke maand op dezelfde dag. We mailen je op ${m[3]}, drie dagen vooraf, zodat het nooit een verrassing is.`,
   ],
   // The search term is the reader's own word; only the sentence around it moves.
   [/^Nothing matches (.+)\.$/, (m) => `Niets komt overeen met ${m[1] ?? ""}.`],
@@ -841,10 +816,6 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
       `Vandaag wordt er niets aangerekend. We vragen een kaart zodat het op dag ${m[1]} niet stopt.`,
   ],
   [
-    /^Your workspace is ready\. Keep it for (\d+) days, on us\.$/,
-    (m) => `Je werkruimte staat klaar. Hou ze ${m[1]} dagen, op ons.`,
-  ],
-  [
     /^No card now\. Nothing is charged before (.+), and you can stop in one click\.$/,
     (m) =>
       `Nu geen kaart. Er wordt niets aangerekend voor ${m[1]}, en je kan met één klik stoppen.`,
@@ -855,8 +826,6 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
       `Iedereen zit in de ${m[1]}. Mensen toevoegen kost niets, dus de enige reden om te wachten is dat je het nog niet zeker weet.`,
   ],
   [/^Nobody at your company uses this yet\?$/, () => "Gebruikt er bij jou nog niemand dit?"],
-  [/^instead, free for (\d+) days\.$/, (m) => `in de plaats, ${m[1]} dagen gratis.`],
-  [/^Start a company, free for (\d+) days$/, (m) => `Start een bedrijf, ${m[1]} dagen gratis`],
   [/^Allow pop-ups to open the document\.$/, () => "Sta pop-ups toe om het document te openen."],
   [/^(\d+) last full week$/, (m) => `${m[1]} de vorige volledige week`],
   [/^(\d+) active · (\d+) not yet valued$/, (m) => `${m[1]} actief · ${m[2]} nog zonder waarde`],
@@ -890,7 +859,6 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
   [/^(\d+) quotes? and (\d+) contracts?$/, (m) => `${m[1]} offerte(s) en ${m[2]} contract(en)`],
   [/^(\d+) files?$/, (m) => `${m[1]} ${Number(m[1]) === 1 ? "bestand" : "bestanden"}`],
   [/^(\d+) accounts?$/, (m) => `${m[1]} ${Number(m[1]) === 1 ? "account" : "accounts"}`],
-  [/^Day (\d+) of (\d+) free$/, (m) => `Dag ${m[1]} van ${m[2]} gratis`],
   [/^Question (\d+) of (\d+)$/, (m) => `Vraag ${m[1]} van ${m[2]}`],
   [/^Import (\d+) leads$/, (m) => `Importeer ${m[1]} leads`],
   [/^(\d+) of (\d+) columns mapped$/, (m) => `${m[1]} van ${m[2]} kolommen gekoppeld`],
@@ -927,11 +895,6 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
   [/^Allow (.+) in$/, (m) => `Laat ${m[1]} binnen`],
   [/^Signed in as (.+)$/, (m) => `Aangemeld als ${m[1]}`],
   [/^(.+) wants to work with your leads$/, (m) => `${m[1]} wil met je leads werken`],
-  [/^Start my (\d+) days$/, (m) => `Start mijn ${m[1]} dagen`],
-  [/^Start my (\d+) days free$/, (m) => `Start mijn ${m[1]} gratis dagen`],
-  [/^(\d+) days free$/, (m) => `${m[1]} dagen gratis`],
-  [/^(\d+) day trial$/, (m) => `Proefperiode van ${m[1]} dagen`],
-  [/^Then on (.+)$/, (m) => `Daarna op ${m[1]}`],
   [
     /^Invite (\d+) (?:person|people)$/,
     (m) => `Nodig ${m[1]} ${Number(m[1]) === 1 ? "persoon" : "mensen"} uit`,

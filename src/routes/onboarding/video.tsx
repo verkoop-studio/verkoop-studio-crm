@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Mark } from "@/components/brand";
 import { Arrow } from "@/components/Onboarding";
 import { Segmented } from "@/components/sales-ui";
 import { useLanguage } from "@/hooks/use-language";
-import { readDraft } from "@/lib/onboarding";
+import { clearDraft, createWorkspace, landingRoute, readDraft } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/video")({
   head: () => ({ meta: [{ title: "Setting up your workspace | Sales" }] }),
@@ -15,18 +16,42 @@ export const Route = createFileRoute("/onboarding/video")({
 const FILM = import.meta.env["VITE_EXPLAINER_VIDEO_URL"] as string | undefined;
 
 /*
- * The explainer, between the questions and the checkout.
+ * The explainer, and the step that actually opens the workspace.
  *
- * Full width, because it is the only thing on the page worth looking at, and
- * Continue sits at the bottom right where you leave. Nothing here blocks: the
- * rest of the set-up keeps running whether you watch it or not.
+ * The page has always said "we are setting it up" while nothing happened; the
+ * checkout after it did the work. With no checkout — the workspace is free
+ * until it crosses the free ceiling, so there is nothing to charge for — the
+ * sentence becomes true here: the call goes out on arrival and the film plays
+ * over it. Continue waits only if the call has not come back yet.
  */
 function Explainer() {
   const { language, setLanguage } = useLanguage();
+  const navigate = useNavigate();
   const nl = language === "nl";
   const draft = readDraft();
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [opening, setOpening] = useState<"busy" | "done" | string>("busy");
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void createWorkspace((readDraft().companyName ?? "").trim() || "My company").then((result) =>
+      setOpening(result.ok ? "done" : result.message),
+    );
+  }, []);
+
+  const go = () => {
+    if (opening === "busy") return;
+    if (opening !== "done") {
+      toast.error(opening);
+      return;
+    }
+    const answers = readDraft().answers;
+    clearDraft();
+    navigate({ to: landingRoute(answers) });
+  };
 
   const copy = nl
     ? {
@@ -34,6 +59,7 @@ function Explainer() {
         title: "Kijk dit even terwijl we alles klaarzetten.",
         sub: "45 seconden, en je weet hoe je een lead van eerste contact tot getekend contract krijgt.",
         cta: "Verder",
+        opening: "Je werkruimte wordt geopend…",
         ctaNote: "Je hoeft niet te wachten. De rest loopt door, ook als je doorklikt.",
         noFilm: "De film staat nog niet in deze build. De rest loopt gewoon door.",
       }
@@ -42,6 +68,7 @@ function Explainer() {
         title: "Watch this while we set it up.",
         sub: "45 seconds, and you will know how a lead gets from first hello to a signed contract.",
         cta: "Continue",
+        opening: "Opening your workspace…",
         ctaNote: "No need to wait. The rest keeps running after you click on.",
         noFilm: "The film is not in this build yet. Everything else carries on regardless.",
       };
@@ -145,14 +172,16 @@ function Explainer() {
             <span className="min-w-0 flex-[1_1_280px] text-[13px] leading-[1.6] text-caption">
               {copy.ctaNote}
             </span>
-            <Link
-              to="/onboarding/checkout"
-              className="ml-auto flex min-h-11 items-center justify-center gap-2.5 rounded-control px-[18px] py-[11px] text-[14px] font-semibold text-white no-underline shadow-raised"
+            <button
+              type="button"
+              onClick={go}
+              disabled={opening === "busy"}
+              className="ml-auto flex min-h-11 items-center justify-center gap-2.5 rounded-control border-0 px-[18px] py-[11px] text-[14px] font-semibold text-white no-underline shadow-raised disabled:opacity-60"
               style={{ background: "var(--vsp-accent)" }}
             >
-              {copy.cta}
+              {opening === "busy" ? copy.opening : copy.cta}
               <Arrow />
-            </Link>
+            </button>
           </div>
         </div>
       </div>

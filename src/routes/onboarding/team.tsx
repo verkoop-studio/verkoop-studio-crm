@@ -50,7 +50,7 @@ function Team() {
         day={day}
         aside={
           <>
-            <span>Day {day} of 14 free</span>
+            <span>{`Day ${day} of ${PLAN.trialDays} free`}</span>
             <Link to="/onboarding/about" className="text-[12px] font-semibold">
               Skip
             </Link>

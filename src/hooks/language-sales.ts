@@ -32,6 +32,44 @@ export const SALES_NL: Record<string, string> = {
     "Kon net niet verversen, dus dit zijn de laatst geladen gegevens.",
   "counting…": "tellen…",
 
+  // The country a company bills from, on the second onboarding step.
+  "Belgium, EUR, 21% VAT": "Belgi\u00eb, EUR, 21% btw",
+  "Netherlands, EUR, 21% VAT": "Nederland, EUR, 21% btw",
+  "France, EUR, 20% VAT": "Frankrijk, EUR, 20% btw",
+  "Germany, EUR, 19% VAT": "Duitsland, EUR, 19% btw",
+  "Luxembourg, EUR, 17% VAT": "Luxemburg, EUR, 17% btw",
+
+  // The outcome lines on the fourth step change with the answers.
+  "At that volume you will live on the Prospectflow board rather than the list, so we will make that your landing screen.":
+    "Bij dat aantal zit je eerder op het Prospectflow-bord dan in de lijst, dus maken we dat je startscherm.",
+  "Open pipeline goes to the top of your dashboard, and we will keep asking for a value on leads that do not have one, because an unvalued deal makes that number a lie.":
+    "Open pipeline komt bovenaan je dashboard, en we blijven om een bedrag vragen bij leads die er geen hebben, want een lead zonder waarde maakt dat getal een leugen.",
+  "Under fifty open deals, the list is faster than a board, so we will start you on Leads and leave the board a click away.":
+    "Onder vijftig open deals is de lijst sneller dan een bord, dus starten we je op Leads en blijft het bord \u00e9\u00e9n klik ver.",
+  "Your dashboard leads with where leads come from, and winning a deal sends its value back to Performance so the ad that started it gets the credit.":
+    "Je dashboard begint bij waar leads vandaan komen, en een gewonnen deal stuurt zijn waarde terug naar Performance, zodat de advertentie die hem startte de eer krijgt.",
+
+  // The three panels on the company step: their bodies had no Dutch.
+  "Drop the file in and we show you its first row, so you can say which column is the company and which is the email. Map it once and we remember it for the next list. Duplicates are matched on email and skipped unless you say otherwise.":
+    "Sleep het bestand erin en we tonen de eerste rij, zodat je kan zeggen welke kolom het bedrijf is en welke het e-mailadres. Je koppelt het \u00e9\u00e9n keer en we onthouden het voor de volgende lijst. Dubbels worden op e-mailadres herkend en overgeslagen, tenzij je iets anders zegt.",
+  "You get a snippet to paste on your site, or a hosted page if you would rather not touch the code. Every submission becomes a lead in New, tagged with the page it came from, and whoever is on duty gets an email.":
+    "Je krijgt een stukje code om op je site te plakken, of een pagina bij ons als je liever niet aan de code komt. Elke inzending wordt een lead in Nieuw, met de pagina erbij waar hij vandaan komt, en wie van wacht is krijgt een mail.",
+  "Fair enough. The list starts empty and you add the first company yourself, which takes about thirty seconds. Most people start here and import something later once they trust it.":
+    "Ook goed. De lijst begint leeg en je voegt het eerste bedrijf zelf toe, wat ongeveer dertig seconden duurt. De meesten beginnen hier en importeren later iets, als ze het vertrouwen.",
+
+  // A sentence wrapped around an inline link arrives in three pieces; the
+  // trailing one needs its own entry or half the line stays English.
+  "instead, or open the invitation they sent you.":
+    "in plaats daarvan, of open de uitnodiging die ze je stuurden.",
+
+  // Page titles. The tab says the same thing as the page.
+  "Create your workspace | Sales": "Maak je werkruimte | Sales",
+  "Your company | Sales": "Je bedrijf | Sales",
+  "Your team | Sales": "Je team | Sales",
+  "How you sell | Sales": "Hoe je verkoopt | Sales",
+  "Setting up your workspace | Sales": "Je werkruimte wordt klaargezet | Sales",
+  "Start your trial | Sales": "Start je proefperiode | Sales",
+
   /* ── Chrome ──────────────────────────────────────────────────────────── */
   Sales: "Sales",
   Dashboard: "Dashboard",
@@ -724,6 +762,26 @@ const age = (value: string) => {
 
 /** The lines that carry a figure, so a fixed lookup cannot reach them. */
 export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
+  [
+    /^Adding people never changes this number\. Three today or thirty next year, it is (.+) for the company\.$/,
+    (m) =>
+      `Mensen toevoegen verandert dit bedrag nooit. Drie vandaag of dertig volgend jaar, het is ${m[1]} voor het hele bedrijf.`,
+  ],
+  [/^Day (\d+) of (\d+) free$/, (m) => `Dag ${m[1]} van ${m[2]} gratis`],
+  // Onboarding. Each of these is one text node now: a sentence split across a
+  // JSX interpolation never reaches the translator, because it arrives as two.
+  [/^(\d+) day trial$/, (m) => `${m[1]} dagen gratis`],
+  [/^Question (\d+) of (\d+)$/, (m) => `Vraag ${m[1]} van ${m[2]}`],
+  [/^Then on (.+)$/, (m) => `Daarna op ${m[1]}`],
+  [
+    /^(.+), (\d+) (?:person|people)$/,
+    (m) => `${m[1]}, ${m[2]} ${m[2] === "1" ? "persoon" : "personen"}`,
+  ],
+  [
+    /^Including (\d+)% VAT, which is (.+), then the same day each month\. We email you on (.+), three days before, so it is never a surprise\.$/,
+    (m) =>
+      `Inclusief ${m[1]}% btw, dat is ${m[2]}, daarna elke maand op dezelfde dag. We mailen je op ${m[3]}, drie dagen vooraf, zodat het nooit een verrassing is.`,
+  ],
   // The search term is the reader's own word; only the sentence around it moves.
   [/^Nothing matches (.+)\.$/, (m) => `Niets komt overeen met ${m[1] ?? ""}.`],
   [

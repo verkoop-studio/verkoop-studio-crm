@@ -130,7 +130,7 @@ function About() {
         <Panel className="flex flex-col">
           <div className="flex flex-wrap items-center gap-3 border-b border-hairline px-[22px] pb-3 pt-[15px]">
             <span className="text-[12px] font-semibold text-body vsp-nums">
-              Question {step + 1} of {QUESTIONS.length}
+              {`Question ${step + 1} of ${QUESTIONS.length}`}
             </span>
             <span className="flex gap-1.5">
               {QUESTIONS.map((_, index) => (

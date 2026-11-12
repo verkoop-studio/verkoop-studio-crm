@@ -20,7 +20,7 @@ export function Stepper({ step }: { step: number }) {
       <span className="text-[12px] font-semibold text-accent-ink sm:hidden">
         {`Step ${step} of ${STEPS.length} · ${STEPS[step - 1]}`}
       </span>
-      <div className="hidden min-w-0 max-w-[560px] flex-[1_1_360px] items-center gap-[7px] sm:flex">
+      <div className="hidden min-w-0 max-w-[560px] flex-none items-center gap-[7px] sm:flex">
         {STEPS.map((label, index) => {
           const number = index + 1;
           const done = number < step;
@@ -100,12 +100,7 @@ export function OnboardingBar({
       </Link>
       <Stepper step={step} />
       <span className="ml-auto flex items-center gap-3.5 text-[12px] text-body-quiet">
-        {aside ??
-          (day != null ? (
-            <span>
-              Day {day} of {PLAN.trialDays} free
-            </span>
-          ) : null)}
+        {aside ?? (day != null ? <span>{`Day ${day} of ${PLAN.trialDays} free`}</span> : null)}
       </span>
     </div>
   );

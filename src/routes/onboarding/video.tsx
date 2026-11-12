@@ -32,18 +32,27 @@ function Explainer() {
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [opening, setOpening] = useState<"busy" | "done" | string>("busy");
+  const [signedOut, setSignedOut] = useState(false);
   const started = useRef(false);
 
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    void createWorkspace((readDraft().companyName ?? "").trim() || "My company").then((result) =>
-      setOpening(result.ok ? "done" : result.message),
-    );
+    void createWorkspace((readDraft().companyName ?? "").trim() || "My company").then((result) => {
+      if (!result.ok && result.reason === "signed-out") setSignedOut(true);
+      setOpening(result.ok ? "done" : result.message);
+    });
   }, []);
 
   const go = () => {
     if (opening === "busy") return;
+    // A session that is gone is not a thing to retry: say so and send them to
+    // sign in, keeping the draft so the set-up picks up where it stopped.
+    if (signedOut) {
+      toast.error(opening);
+      navigate({ to: "/auth" });
+      return;
+    }
     if (opening !== "done") {
       toast.error(opening);
       return;

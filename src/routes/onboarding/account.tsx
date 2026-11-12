@@ -30,6 +30,7 @@ function Account() {
   const [password, setPassword] = useState("");
   const [shown, setShown] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState<"confirm" | "exists" | string | null>(null);
   const strength = passwordStrength(password);
   const { language } = useLanguage();
 
@@ -40,17 +41,56 @@ function Account() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
+    setBlocked(null);
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: `${window.location.origin}/auth`, data: { full_name: name } },
     });
     if (error) {
       setBusy(false);
+      // A project with address enumeration left on says so here instead of
+      // through the empty-identities answer below. Same situation, same panel.
+      if (error.code === "user_already_exists" || error.code === "email_exists") {
+        setBlocked("exists");
+        return;
+      }
       toast.error(error.message);
       return;
     }
-    await supabase.auth.signInWithPassword({ email, password });
+
+    /*
+     * Everything below is about one question: did this leave us with a session?
+     *
+     * It used to not ask. The sign-in ran, its result was thrown away, and the
+     * rest of the set-up happened signed out — which nothing notices until the
+     * last screen, where opening the workspace needs a session and Postgres
+     * refuses the call. Four steps of someone's time, then a privilege error.
+     */
+
+    // Supabase returns a user with no identities when the address already has
+    // an account, rather than saying so and confirming who has one.
+    if (data.user && data.user.identities?.length === 0) {
+      setBusy(false);
+      setBlocked("exists");
+      return;
+    }
+
+    if (!data.session) {
+      const signIn = await supabase.auth.signInWithPassword({ email, password });
+      if (!signIn.data.session) {
+        setBusy(false);
+        // A project that confirms addresses by email cannot sign anyone in
+        // until they click the link, and says so in a code worth reading.
+        setBlocked(
+          signIn.error?.code === "email_not_confirmed"
+            ? "confirm"
+            : (signIn.error?.message ?? "confirm"),
+        );
+        return;
+      }
+    }
+
     setBusy(false);
     writeDraft({ fullName: name, email, startedAt: new Date().toISOString() });
     navigate({ to: "/onboarding/company" });
@@ -208,6 +248,31 @@ function Account() {
                 </span>
               </span>
             </span>
+
+            {blocked && (
+              <div
+                role="alert"
+                className="flex flex-col gap-1.5 rounded-control border border-warn-line bg-warn-bg px-[13px] py-[11px]"
+              >
+                <span className="text-[13px] font-semibold text-ink">
+                  {blocked === "exists"
+                    ? "That address already has an account."
+                    : blocked === "confirm"
+                      ? "Confirm your email address first."
+                      : "We could not sign you in."}
+                </span>
+                <span className="text-[12px] leading-[1.55] text-body">
+                  {blocked === "exists"
+                    ? "Sign in with it instead, or open the invitation someone sent you."
+                    : blocked === "confirm"
+                      ? `We sent a link to ${email}. Open it, then sign in here and your set-up carries on.`
+                      : blocked}
+                </span>
+                <Link to="/auth" className="text-[12px] font-semibold text-accent-ink">
+                  Go to sign in
+                </Link>
+              </div>
+            )}
 
             <button
               type="submit"

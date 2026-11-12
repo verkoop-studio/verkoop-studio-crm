@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Mark } from "@/components/brand";
+import { useLanguage } from "@/hooks/use-language";
 import { Stepper } from "@/components/Onboarding";
 import { Panel, euroCents } from "@/components/sales-ui";
 import {
@@ -60,12 +61,22 @@ const label = "text-[12px] font-semibold text-body";
  * card was stored, the workspace is still opened, and the screen says so
  * rather than pretending a subscription exists.
  */
+const COUNTRY_NL: Record<string, string> = {
+  Belgium: "Belgi\u00eb",
+  Netherlands: "Nederland",
+  France: "Frankrijk",
+  Germany: "Duitsland",
+  Luxembourg: "Luxemburg",
+};
+
 function Checkout() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const draft = readDraft();
   const schedule = trialSchedule(draft.startedAt ?? new Date());
-  const chargeOn = billingDate(schedule.firstChargeOn);
-  const remindOn = billingDate(schedule.reminderOn);
+  // billingDate already speaks both languages; without this it always said November.
+  const chargeOn = billingDate(schedule.firstChargeOn, language);
+  const remindOn = billingDate(schedule.reminderOn, language);
 
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [business, setBusiness] = useState(true);
@@ -103,11 +114,7 @@ function Checkout() {
     setBusy(false);
 
     if (!workspace.ok) {
-      setResult(
-        workspace.reason === "not_enabled"
-          ? "Your account exists and nothing was charged, but opening a new workspace is still reserved to Verkoop Studio. Ask them to open it and everything you filled in here is waiting."
-          : `The workspace could not be opened: ${workspace.message}. Nothing was charged.`,
-      );
+      setResult(`The workspace could not be opened: ${workspace.message}. Nothing was charged.`);
       return;
     }
 
@@ -482,7 +489,7 @@ function Checkout() {
                       {["Belgium", "Netherlands", "France", "Germany", "Luxembourg"].map(
                         (option) => (
                           <option key={option} value={option}>
-                            {option}
+                            {language === "nl" ? COUNTRY_NL[option] : option}
                           </option>
                         ),
                       )}
@@ -615,7 +622,7 @@ function Checkout() {
                   <span className="flex flex-col">
                     <span className="text-[14px] font-semibold tracking-[-0.02em]">Sales</span>
                     <span className="text-[12px] text-body-quiet">
-                      {`${draft.companyName ?? "Your company"}, ${people} ${
+                      {`${draft.companyName ?? (language === "nl" ? "Je bedrijf" : "Your company")}, ${people} ${
                         people === 1 ? "person" : "people"
                       }`}
                     </span>
@@ -628,7 +635,7 @@ function Checkout() {
                   </span>
                 </span>
                 <span className="flex items-baseline gap-3 border-t border-hairline px-[18px] py-[11px]">
-                  <span className="text-[13px] text-body">{PLAN.trialDays} day trial</span>
+                  <span className="text-[13px] text-body">{`${PLAN.trialDays} day trial`}</span>
                   <span className="ml-auto text-[13px] font-semibold text-good vsp-nums">
                     − {euroCents(PLAN.monthlyExclVat)}
                   </span>
@@ -640,7 +647,7 @@ function Checkout() {
                   </span>
                 </span>
                 <span className="flex flex-wrap items-baseline gap-2 border-t border-hairline px-[18px] pb-3.5 pt-3">
-                  <span className="text-[13px] text-body">Then on {chargeOn}</span>
+                  <span className="text-[13px] text-body">{`Then on ${chargeOn}`}</span>
                   <span className="ml-auto text-[13px] font-semibold text-ink vsp-nums">
                     {euroCents(PLAN.monthlyInclVat)}
                   </span>
@@ -670,8 +677,9 @@ function Checkout() {
                   <path d="M19 8v6M22 11h-6" />
                 </svg>
                 <span className="text-[12px] leading-[1.6] text-accent-ink">
-                  Adding people never changes this number. Three today or thirty next year, it is{" "}
-                  {euroCents(PLAN.monthlyExclVat)} for the company.
+                  {`Adding people never changes this number. Three today or thirty next year, it is ${euroCents(
+                    PLAN.monthlyExclVat,
+                  )} for the company.`}
                 </span>
               </div>
 

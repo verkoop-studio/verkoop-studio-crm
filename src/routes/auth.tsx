@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase, isDatabaseConfigured } from "@/integrations/supabase/client";
 import { safeNext } from "@/lib/auth-redirect";
+import { routeWithoutWorkspace } from "@/lib/onboarding";
 import {
   AuthSplit,
   Chain,
@@ -96,7 +97,15 @@ function SignIn() {
       return;
     }
     const { data: companies } = await supabase.rpc("list_my_companies");
-    navigate({ to: companies && companies.length > 0 ? "/dashboard" : "/pending" });
+    if (companies && companies.length > 0) {
+      navigate({ to: "/dashboard" });
+      return;
+    }
+    // No workspace is not one situation. Someone who signed themselves up is
+    // picking up a set-up they were interrupted in; only someone who asked an
+    // administrator for access is actually waiting.
+    const { data: auth } = await supabase.auth.getUser();
+    navigate({ to: routeWithoutWorkspace(auth.user) });
   };
 
   const submit = async (event: React.FormEvent) => {

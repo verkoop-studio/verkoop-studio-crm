@@ -14,6 +14,7 @@ import {
   primaryClass,
 } from "@/components/AuthSplit";
 import { FREE_LEADS } from "@/lib/billing";
+import { useLanguage } from "@/hooks/use-language";
 
 export const Route = createFileRoute("/request-access")({
   head: () => ({
@@ -56,6 +57,7 @@ function Unavailable() {
  */
 function RequestAccess() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,7 +87,9 @@ function RequestAccess() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth`,
-        data: { full_name: name },
+        // Same reason as the onboarding form: the confirmation mail reads this
+        // back to pick its language.
+        data: { full_name: name, language },
       },
     });
     if (error) {

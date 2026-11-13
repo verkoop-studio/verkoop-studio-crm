@@ -7,7 +7,7 @@ Build with `npm run build`; start the resulting server with `node .output/server
 
 The production CRM is deployed at https://crm.verkoop.studio and uses its configured Supabase project. Preserve the populated production database; bootstrap scripts below are for a new empty installation only.
 
-For a new project, apply every file in `supabase/migrations/` in filename order. That is the only provisioning path that produces the company-scoped schema the CRM relies on. After the owner signs up, use `supabase/bootstrap/first-admin.sql` with the verified owner UUID. Configure Auth site/redirect URLs for the CRM. Google login requires your own Google provider configuration. Keep the service role key on the server only.
+For a new project, apply every file in `supabase/migrations/` in filename order. That is the only provisioning path that produces the company-scoped schema the CRM relies on. After the owner signs up, use `supabase/bootstrap/first-admin.sql` with the verified owner UUID. Set the authentication sender, URLs and templates as "Authentication e-mail" below describes; a project left on its defaults mails out links to the address it was created with. Google login requires your own Google provider configuration. Keep the service role key on the server only.
 
 Do not use `supabase/bootstrap/fresh-crm.sql`. It predates company workspaces and produces a database with no tenant isolation — its policies let any user holding any role row read, update and delete every lead. It is kept only as a record of the pre-workspace schema. After provisioning a new project, confirm isolation before putting data in it:
 
@@ -21,6 +21,60 @@ Every returned policy must reference `company_id`. If any does not, stop and fix
 The MCP endpoint is `/mcp`, powered by the standard MCP SDK. Set `CRM_PUBLIC_URL` to the deployed HTTPS origin and enable the Supabase OAuth server with `/oauth/consent` as its authorization path before connecting an AI client. Website intake is available at `/api/public/inbound-lead` using a server-only intake token configured under Settings. The production intake and authenticated MCP endpoint were verified during the 2026-10-02 audit. Authorization in an external AI client must still be tested separately.
 
 Validation: `npx tsc --noEmit`, `npm run test:integrations`, `npm run build`.
+
+## Authentication e-mail
+
+Two kinds of e-mail leave this product and they leave by different roads.
+
+**Team invitations** are ours. The server generates the token and sends the message itself through Resend, from `CRM_INVITATION_FROM` on the verified sender domain. Nothing about them is configured in Supabase.
+
+**Confirm your e-mail address** and **Choose a new password** are sent by Supabase Auth. Those are the ones with settings in the Supabase dashboard, and left at their defaults they go out from a Supabase address, in Supabase's own wording, pointing at whatever Site URL the project was created with. Set all three:
+
+### Sender
+
+Settings → Authentication → SMTP. Until custom SMTP is on, Supabase sends from its own address on shared infrastructure it rate-limits to a handful of messages an hour and documents as being for development, which is not a sender a self-serve sign-up can be built on.
+
+Resend already carries the invitation mail from `send.verkoop.studio`, so that domain is verified and warmed and the same account can carry these:
+
+| Field         | Value                                                             |
+| ------------- | ----------------------------------------------------------------- |
+| Host          | `smtp.resend.com`                                                 |
+| Port          | `465`                                                             |
+| Username      | `resend`                                                          |
+| Password      | a Resend API key, sending-only, restricted to the verified domain |
+| Sender e-mail | `account@send.verkoop.studio`                                     |
+| Sender name   | `Verkoop Studio Sales`                                            |
+
+Resend's own SMTP page prints the username and port it expects; take them from there rather than from this table if the two disagree. **Keep click and open tracking off for this domain**, for the same reason the invitation mail needs it off: tracking rewrites every link, and a rewritten confirmation link is a confirmation link a scanner can spend before the person clicks it.
+
+### Addresses
+
+Authentication → URL Configuration.
+
+| Field         | Value                           |
+| ------------- | ------------------------------- |
+| Site URL      | `https://crm.verkoop.studio`    |
+| Redirect URLs | `https://crm.verkoop.studio/**` |
+
+Site URL is the fallback, not a formality. The app asks for `/auth`, `/reset-password` or `/accept-invite` by name, and a redirect that is not on the allow-list is not refused — it is quietly replaced by Site URL. A project still carrying the development Site URL therefore mails out a working link to a machine the reader does not have. Reproduced against the local stack: an allow-listed address survives into the link, one that is not allow-listed comes back as Site URL instead.
+
+### Wording
+
+Authentication → Emails. Paste the matching file from `supabase/templates/` into each template, and put the subject line beside it:
+
+| Template             | File                  | Subject                                               |
+| -------------------- | --------------------- | ----------------------------------------------------- |
+| Confirm signup       | `confirm-signup.html` | Bevestig je e-mailadres · Verkoop Studio Sales        |
+| Reset password       | `reset-password.html` | Kies een nieuw wachtwoord · Verkoop Studio Sales      |
+| Magic link           | `magic-link.html`     | Je aanmeldlink · Verkoop Studio Sales                 |
+| Invite user          | `invite.html`         | Je bent uitgenodigd · Verkoop Studio Sales            |
+| Change email address | `email-change.html`   | Bevestig je nieuwe e-mailadres · Verkoop Studio Sales |
+
+Those files are generated: edit `scripts/build-auth-templates.mjs`, run `npm run mail:build`, and commit both. `tests/auth-templates.test.mjs` fails if the committed HTML and the generator ever disagree, so the dashboard can be re-pasted from the repository at any time and be right.
+
+Each one picks Dutch or English from `language` in the signer-up's `user_metadata`, which the sign-up form writes. An account that has no such key — anything made before this existed — reads as Dutch rather than failing to render.
+
+`supabase/config.toml` holds the same three things for `supabase start`, so a change can be seen in Mailpit on `http://127.0.0.1:54324` before it is pasted into the dashboard. That file is local only: this repository is not linked to the hosted project and nothing pushes it.
 
 ## Contract and quote attachments
 

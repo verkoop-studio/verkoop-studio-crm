@@ -352,6 +352,14 @@ export const SALES_NL: Record<string, string> = {
   Manage: "Beheren",
   "New reporting token created": "Nieuw rapporteringstoken aangemaakt",
   Plan: "Abonnement",
+  "That address already has an account.": "Dat adres heeft al een account.",
+  "Sign in with it instead, or open the invitation someone sent you.":
+    "Meld je er dan mee aan, of open de uitnodiging die iemand je stuurde.",
+  "Confirm your email address first.": "Bevestig eerst je e-mailadres.",
+  "We could not sign you in.": "We konden je niet aanmelden.",
+  "Go to sign in": "Naar aanmelden",
+  "You are not signed in any more, so the workspace was not opened.":
+    "Je bent niet meer aangemeld, dus de werkruimte is niet geopend.",
   "Show me where they came from": "Laat zien waar ze vandaan komen",
   "They came from an ad or your site in the last 30 days. This app cannot tell you which ad, post or search brought them. Verkoop Studio Performance can.":
     "Ze kwamen de laatste 30 dagen van een advertentie of van je site. Deze app kan je niet zeggen welke advertentie, post of zoekopdracht hen bracht. Verkoop Studio Performance wel.",
@@ -729,6 +737,10 @@ export const SALES_PATTERNS: [RegExp, (match: RegExpMatchArray) => string][] = [
   // JSX interpolation never reaches the translator, because it arrives as two.
   [/^Question (\d+) of (\d+)$/, (m) => `Vraag ${m[1]} van ${m[2]}`],
   [/^Free until (\d+) leads$/, (m) => `Gratis tot ${m[1]} leads`],
+  [
+    /^We sent a link to (.+)\. Open it, then sign in here and your set-up carries on\.$/,
+    (m) => `We stuurden een link naar ${m[1]}. Open die, meld je hier aan en je set-up loopt door.`,
+  ],
   [
     /^(\d+) (?:lead|leads) with no campaign on them$/,
     (m) => `${m[1]} ${m[1] === "1" ? "lead" : "leads"} zonder campagne erbij`,

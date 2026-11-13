@@ -65,7 +65,7 @@ export function clearDraft() {
 }
 
 export type WorkspaceResult =
-  { ok: true; id: string } | { ok: false; reason: "failed"; message: string };
+  { ok: true; id: string } | { ok: false; reason: "failed" | "signed-out"; message: string };
 
 /**
  * Create the workspace the self-serve flow has been collecting.
@@ -75,6 +75,21 @@ export type WorkspaceResult =
  * fails now is the database being unreachable or refusing the name.
  */
 export async function createWorkspace(name: string): Promise<WorkspaceResult> {
+  /*
+   * Check the session before asking, because without one this call goes out as
+   * `anon`, the migration revokes `create_crm_company` from `anon`, and
+   * Postgres answers "permission denied for function create_crm_company".
+   * That is a true sentence about a grant and a useless one about what the
+   * reader should do, and it arrives on the last screen of the flow.
+   */
+  const { data: auth } = await supabase.auth.getSession();
+  if (!auth.session) {
+    return {
+      ok: false,
+      reason: "signed-out",
+      message: "You are not signed in any more, so the workspace was not opened.",
+    };
+  }
   const { data, error } = await supabase.rpc("create_crm_company", { _name: name });
   if (error) return { ok: false, reason: "failed", message: error.message };
   return { ok: true, id: data as string };

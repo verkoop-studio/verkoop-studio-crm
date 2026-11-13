@@ -15,3 +15,55 @@ project_id = "sales-crm"
 enabled = true
 # So a client can register itself locally instead of needing one seeded by hand.
 allow_dynamic_registration = true
+
+# Authentication e-mail and the addresses a link may return to.
+#
+# This project is not linked to the hosted one — `supabase/.temp` holds no
+# project ref and no workflow pushes config — so nothing below reaches
+# production. Site URL, redirect URLs, SMTP and these same templates are set
+# in the Supabase dashboard; README · "Authentication e-mail" lists the fields
+# and the values. What this section does is make `supabase start` behave the
+# way the hosted project behaves, so the next person to change an auth e-mail
+# can see it before a customer does.
+[auth]
+# The CLI's own default is http://127.0.0.1:3000, which is nothing on this
+# machine: the dev server is on 5173. Left alone, every link in every local
+# confirmation mail points at a port with nothing behind it.
+site_url = "http://127.0.0.1:5173"
+# A redirect that is not on this list is not refused — it is silently swapped
+# for site_url, which is how a confirmation mail ends up pointing at a machine
+# that is not yours. Both spellings of the loopback address are here because a
+# browser opened on localhost and one opened on 127.0.0.1 are different
+# origins to this list, and the dev server answers to both.
+additional_redirect_urls = ["http://127.0.0.1:5173/**", "http://localhost:5173/**"]
+
+[auth.email]
+# A hosted project confirms addresses out of the box; `supabase start` does
+# not. That one difference is the whole reason sign-up could be shipped
+# broken: the local stack handed back a session, production handed back none,
+# and the first thing that needed the session was four steps later. On here,
+# development walks the same road production does.
+enable_confirmations = true
+
+# Rendered from scripts/build-auth-templates.mjs. Edit that file, run
+# `npm run mail:build`, and commit both. tests/auth-templates.test.mjs fails if
+# the committed HTML and the generator ever disagree.
+[auth.email.template.confirmation]
+subject = "Bevestig je e-mailadres · Verkoop Studio Sales"
+content_path = "./supabase/templates/confirm-signup.html"
+
+[auth.email.template.recovery]
+subject = "Kies een nieuw wachtwoord · Verkoop Studio Sales"
+content_path = "./supabase/templates/reset-password.html"
+
+[auth.email.template.magic_link]
+subject = "Je aanmeldlink · Verkoop Studio Sales"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.invite]
+subject = "Je bent uitgenodigd · Verkoop Studio Sales"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.email_change]
+subject = "Bevestig je nieuwe e-mailadres · Verkoop Studio Sales"
+content_path = "./supabase/templates/email-change.html"

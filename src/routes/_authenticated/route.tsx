@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase, isDatabaseConfigured } from "@/integrations/supabase/client";
 import { initializeCompany, getCompanyId } from "@/lib/company-context";
+import { routeWithoutWorkspace } from "@/lib/onboarding";
 import { AppShell } from "@/components/AppShell";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -20,6 +21,13 @@ export const Route = createFileRoute("/_authenticated")({
           { id: data.user.id, email: data.user.email ?? null, full_name: fullName },
           { onConflict: "id", ignoreDuplicates: true },
         );
+      // Someone who signed themselves up has no workspace because they have
+      // not finished making one, not because an administrator has yet to say
+      // yes. Filing an access request for them would put a founder in their
+      // own approval queue, so the request is written only on the path that
+      // asks for one.
+      const destination = routeWithoutWorkspace(data.user);
+      if (destination === "/onboarding/company") throw redirect({ to: destination });
       if (data.user.email) {
         const { data: existingRequest } = await supabase
           .from("account_requests")
@@ -34,7 +42,7 @@ export const Route = createFileRoute("/_authenticated")({
           });
         }
       }
-      throw redirect({ to: "/pending" });
+      throw redirect({ to: destination });
     }
     return { user: data.user, company: selectedCompany };
   },

@@ -13,7 +13,8 @@
     "test:integrations": "node --experimental-strip-types --test tests/*.test.mjs",
     "demo:data": "node scripts/demo-data.mjs",
     "demo:docs": "node scripts/demo-documents.mjs",
-    "demo:consent": "node scripts/demo-consent.mjs"
+    "demo:consent": "node scripts/demo-consent.mjs",
+    "export:all": "node scripts/export-everything.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

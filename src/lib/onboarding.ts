@@ -96,6 +96,29 @@ export async function createWorkspace(name: string): Promise<WorkspaceResult> {
 }
 
 /**
+ * Where a signed-in person with no workspace belongs.
+ *
+ * Two kinds of people arrive here with nothing behind their account. Someone
+ * who asked an administrator at their company for access is genuinely waiting
+ * on another human, and /pending is their screen. Someone who started the
+ * self-serve sign-up is waiting on nobody: they are one step into building
+ * their own workspace and confirming their e-mail address interrupted them.
+ * Sending that person to /pending tells them to wait for an administrator who
+ * does not exist, and the authenticated guard files an access request in their
+ * name on the way past.
+ *
+ * The sign-up form writes `self_signup` into user_metadata, so this answer
+ * travels with the account rather than with the browser — the confirmation
+ * mail is often opened on a phone. An account created before that form started
+ * writing the flag has none, and keeps the behaviour it has today.
+ */
+export function routeWithoutWorkspace(
+  user: { user_metadata?: Record<string, unknown> | null } | null | undefined,
+): "/onboarding/company" | "/pending" {
+  return user?.user_metadata?.["self_signup"] === true ? "/onboarding/company" : "/pending";
+}
+
+/**
  * The answers decide the landing screen, which is the whole reason step 4
  * exists. A lot of open deals, or losing track of them, means the board; a
  * short list means the list.

@@ -45,7 +45,16 @@ function Account() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/auth`, data: { full_name: name } },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth`,
+        // The confirmation mail is a Go template that reads `language` back out
+        // of user_metadata (scripts/build-auth-templates.mjs), so the mail
+        // arrives in the language this form was being read in. Without it,
+        // every mail is Dutch no matter who signed up.
+        // `self_signup` is what tells the rest of the app that nobody is
+        // approving this account: see routeWithoutWorkspace.
+        data: { full_name: name, language, self_signup: true },
+      },
     });
     if (error) {
       setBusy(false);

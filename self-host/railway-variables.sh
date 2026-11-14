@@ -114,10 +114,20 @@ composed() {
 
 sent=0
 missing=()
+empty=()
 while IFS= read -r line; do
   [ -z "$line" ] && continue
   key=${line%%=*}
   value=${line#*=}
+  # An empty value is a variable that has not been decided yet — an S3 bucket
+  # before there is one, an SMTP password someone else has to paste. Railway
+  # refuses an empty value outright, which would stop the whole push on the
+  # first one. Skip it and say so, so the other thirty still land.
+  if [ -z "$value" ]; then
+    echo "  skipped $key (no value in $ENV_FILE)"
+    empty+=("$key")
+    continue
+  fi
   printf '%s' "$value" | railway variables --service "$SERVICE" --skip-deploys --set-from-stdin "$key" >/dev/null
   echo "  set $key"
   sent=$((sent + 1))
@@ -139,6 +149,9 @@ for key in $KEYS; do
 done
 
 echo "$sent variable(s) on $SERVICE."
+if [[ ${#empty[@]:-0} -gt 0 ]]; then
+  echo "Left unset because $ENV_FILE has no value for them: ${empty[*]}"
+fi
 if [[ ${#missing[@]} -gt 0 ]]; then
   echo "Not in $ENV_FILE, so not set: ${missing[*]}" >&2
   exit 1

@@ -3,7 +3,7 @@
 # Put a local env file onto a Railway service, without the values ever being
 # typed, pasted, or appearing in a shell history.
 #
-#   node self-host/keys.mjs > self-host/.env.production   # then add the rest
+#   node self-host/keys.mjs --out self-host/.env.production   # then add the rest
 #   ./self-host/railway-variables.sh db self-host/.env.production
 #
 # Each value goes to Railway through stdin, one at a time, so it is never an

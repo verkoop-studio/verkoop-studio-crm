@@ -23,7 +23,7 @@ Versions are read off the working project rather than taken from a README. The a
 ## Try it here first
 
 ```bash
-node self-host/keys.mjs > self-host/.env
+node self-host/keys.mjs --out self-host/.env
 # then add the block under "Variables" below to that file
 docker compose -f self-host/docker-compose.yml --env-file self-host/.env up -d --build
 ```
@@ -48,7 +48,7 @@ All 22 apply clean on a fresh stack. Walked, not assumed.
 
 ## Variables
 
-`node self-host/keys.mjs` prints the secrets. The rest describe the deployment:
+`node self-host/keys.mjs --out <file>` writes the secrets, and refuses if that file exists — a shell redirect would truncate it first, and these keys only work as a set. The rest describe the deployment:
 
 ```
 PUBLIC_API_URL=https://<the kong domain>

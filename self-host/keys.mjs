@@ -1,9 +1,16 @@
 /*
  * The secrets the stack needs, generated here rather than invented by hand.
  *
- * `node self-host/keys.mjs` prints a block ready to paste into an .env file or
- * into Railway's variables. It prints to stdout and writes nothing: whatever
- * you do with it afterwards is a decision you make on purpose.
+ *   node self-host/keys.mjs --out self-host/.env.production
+ *
+ * With --out it writes the file and REFUSES if that file already exists. Use
+ * it. A shell redirect truncates the target before this program starts, so
+ * `> self-host/.env.production` on a file that already holds the stack's keys
+ * destroys them with no warning and no way back — and if some services already
+ * carry the old values and others get the new ones, nothing matches anything.
+ * Done that. Hence the flag.
+ *
+ * Without --out it prints to stdout and writes nothing.
  *
  * The anon and service keys are not random strings. They are JWTs signed with
  * JWT_SECRET, carrying `role: anon` and `role: service_role`, which is exactly
@@ -16,6 +23,22 @@
  */
 
 import { createHmac, randomBytes } from "node:crypto";
+import { existsSync, writeFileSync } from "node:fs";
+
+const outIndex = process.argv.indexOf("--out");
+const out = outIndex === -1 ? null : process.argv[outIndex + 1];
+if (outIndex !== -1 && !out) {
+  console.error("--out needs a path.");
+  process.exit(1);
+}
+if (out && existsSync(out)) {
+  console.error(
+    `${out} already exists, and these keys are not the ones in it.\n` +
+      "Every service and the app are keyed together, so replacing them means replacing\n" +
+      "all of them at once. Move that file aside first if that is really what you want.",
+  );
+  process.exit(1);
+}
 
 const base64url = (input) =>
   Buffer.from(input).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -38,7 +61,7 @@ const password = () => randomBytes(24).toString("base64url");
 
 const claims = (role) => ({ iss: "supabase", role, iat: issuedAt, exp: expiresAt });
 
-console.log(`# Generated ${new Date().toISOString().slice(0, 10)}. Keys expire in ${YEARS} years.
+const block = `# Generated ${new Date().toISOString().slice(0, 10)}. Keys expire in ${YEARS} years.
 # The anon key is public. Everything else here is not.
 
 JWT_SECRET=${jwtSecret}
@@ -49,4 +72,12 @@ POSTGRES_PASSWORD=${password()}
 AUTH_DB_PASSWORD=${password()}
 STORAGE_DB_PASSWORD=${password()}
 AUTHENTICATOR_DB_PASSWORD=${password()}
-SUPABASE_ADMIN_DB_PASSWORD=${password()}`);
+SUPABASE_ADMIN_DB_PASSWORD=${password()}
+`;
+
+if (out) {
+  writeFileSync(out, block, { mode: 0o600 });
+  console.log(`Wrote ${out} (readable only by you). Put it in the password manager now.`);
+} else {
+  console.log(block);
+}

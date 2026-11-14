@@ -14,6 +14,7 @@
     "demo:data": "node scripts/demo-data.mjs",
     "demo:docs": "node scripts/demo-documents.mjs",
     "demo:consent": "node scripts/demo-consent.mjs",
+    "export:all": "node scripts/export-everything.mjs",
     "mail:build": "node scripts/build-auth-templates.mjs"
   },
   "overrides": {

@@ -41,3 +41,6 @@ dist-ssr
 
 # Supabase CLI local state
 supabase/.temp/
+
+# A full copy of the business: every lead, contact and signed contract.
+export/

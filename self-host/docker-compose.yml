@@ -22,6 +22,9 @@ name: verkoop-sales-selfhost
 
 services:
   db:
+    networks:
+      default:
+        aliases: [db.railway.internal]
     build:
       context: ..
       dockerfile: self-host/Dockerfile.db
@@ -47,11 +50,16 @@ services:
   auth:
     image: public.ecr.aws/supabase/gotrue:v2.197.0
     restart: unless-stopped
+    networks:
+      default:
+        aliases: [auth.railway.internal]
     depends_on:
       db:
         condition: service_healthy
     environment:
-      GOTRUE_API_HOST: 0.0.0.0
+      # :: rather than 0.0.0.0. Railway's private network is IPv6 only, and a
+      # service listening on IPv4 alone is simply not there to the others.
+      GOTRUE_API_HOST: "::"
       GOTRUE_API_PORT: 9999
       # The bare origin, with no path. This tag of GoTrue throws away any path
       # given here when it builds the link in a confirmation mail: it emits
@@ -99,11 +107,15 @@ services:
   rest:
     image: public.ecr.aws/supabase/postgrest:v16.5
     restart: unless-stopped
+    networks:
+      default:
+        aliases: [rest.railway.internal]
     depends_on:
       db:
         condition: service_healthy
     environment:
       PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_DB_PASSWORD}@db:5432/postgres
+      PGRST_SERVER_HOST: "!4"
       PGRST_DB_SCHEMAS: public,storage
       PGRST_DB_ANON_ROLE: anon
       PGRST_JWT_SECRET: ${JWT_SECRET}
@@ -113,6 +125,9 @@ services:
   storage:
     image: public.ecr.aws/supabase/storage-api:v1.90.1
     restart: unless-stopped
+    networks:
+      default:
+        aliases: [storage.railway.internal]
     depends_on:
       db:
         condition: service_healthy
@@ -177,18 +192,13 @@ services:
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
 
   kong:
-    image: public.ecr.aws/supabase/kong:2.8.1
+    # Built, not mounted: Railway cannot mount a single file, so the config
+    # lives in the image and the same image runs in both places.
+    build:
+      context: ..
+      dockerfile: self-host/Dockerfile.kong
     restart: unless-stopped
     depends_on: [auth, rest, storage]
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
-      KONG_DNS_ORDER: LAST,A,CNAME
-      KONG_PLUGINS: request-transformer,cors
-      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
-      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
-    volumes:
-      - ./kong.yml:/home/kong/kong.yml:ro
     ports:
       - "${GATEWAY_PORT:-54331}:8000"
 

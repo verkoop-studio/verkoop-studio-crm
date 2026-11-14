@@ -4,6 +4,11 @@
 # hanging off it. That shape is the only reason this gateway exists: the app's
 # own code is unchanged by the move, because the URL it is given looks the same.
 #
+# The upstreams are named <service>.railway.internal, which is what Railway's
+# private network calls them. The compose file gives the same aliases to the
+# same services, so this file is identical in both places and there is no
+# templating step to get wrong.
+#
 # Deliberately NOT doing api-key checking. Supabase's own gateway config puts a
 # key-auth plugin in front and rejects a request whose `apikey` header is not
 # the anon or the service key. That key is printed in our JavaScript bundle, so
@@ -17,7 +22,7 @@ _transform: true
 
 services:
   - name: auth
-    url: http://auth:9999/
+    url: http://auth.railway.internal:9999/
     routes:
       - name: auth
         strip_path: true
@@ -27,7 +32,7 @@ services:
       - name: cors
 
   - name: rest
-    url: http://rest:3000/
+    url: http://rest.railway.internal:3000/
     routes:
       - name: rest
         strip_path: true
@@ -37,7 +42,7 @@ services:
       - name: cors
 
   - name: storage
-    url: http://storage:5000/
+    url: http://storage.railway.internal:5000/
     routes:
       - name: storage
         strip_path: true
@@ -52,7 +57,7 @@ services:
   # API_EXTERNAL_URL says. Without these routes the mail is perfect and the
   # link is a 404, which is a worse morning than a stack that will not start.
   - name: auth-root
-    url: http://auth:9999
+    url: http://auth.railway.internal:9999
     routes:
       - name: auth-root
         strip_path: false

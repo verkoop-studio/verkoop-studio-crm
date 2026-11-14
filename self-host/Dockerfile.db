@@ -1,4 +1,9 @@
 # The Supabase Postgres image, plus the handful of things it does not do for
 # itself. Railway builds this; the SQL runs once, on an empty volume.
+#
+# Paths are from the repository root, which is the build context both here and
+# on Railway. Anything else means a service that builds on a laptop and not in
+# production, or needs a root directory set by hand in a web form that nobody
+# remembers setting.
 FROM public.ecr.aws/supabase/postgres:17.11.0.018
-COPY init/ /docker-entrypoint-initdb.d/
+COPY self-host/init/ /docker-entrypoint-initdb.d/

@@ -23,8 +23,8 @@ name: verkoop-sales-selfhost
 services:
   db:
     build:
-      context: .
-      dockerfile: Dockerfile.db
+      context: ..
+      dockerfile: self-host/Dockerfile.db
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -160,7 +160,8 @@ services:
   #     run --rm backup
   backup:
     build:
-      context: ./backup
+      context: ..
+      dockerfile: self-host/backup/Dockerfile
     profiles: [tools]
     environment:
       # supabase_admin, not postgres: see init/zz-self-host.sql.

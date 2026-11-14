@@ -1,0 +1,165 @@
+# The same five services Railway will run, on this machine.
+#
+# This file is not how production runs — Railway runs each service on its own,
+# from these images and these variables. It exists so the stack can be stood up
+# and walked before any of it is pointed at a customer, and so a change to the
+# init SQL or the gateway is tried here first.
+#
+# Tags are pinned to the ones a working Supabase project runs today, read off
+# that project rather than taken from a README. The app's migrations, its row
+# policies and PostgREST's claim handling are all version-sensitive, and
+# "latest" is how a Sunday gets ruined.
+#
+#   node self-host/keys.mjs > self-host/.env
+#   docker compose -f self-host/docker-compose.yml up -d
+#
+# Realtime, Studio, the edge runtime, analytics and the connection pooler are
+# all left out: the CRM calls none of them. Counted, not assumed — the app uses
+# 22 PostgREST queries, 13 database functions, 23 auth calls and one storage
+# call, and no channel subscriptions anywhere.
+
+name: verkoop-sales-selfhost
+
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Read by init/01-self-host.sql on the first boot only.
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      STORAGE_DB_PASSWORD: ${STORAGE_DB_PASSWORD}
+      AUTHENTICATOR_DB_PASSWORD: ${AUTHENTICATOR_DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  auth:
+    image: public.ecr.aws/supabase/gotrue:v2.197.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      # The bare origin, with no path. This tag of GoTrue throws away any path
+      # given here when it builds the link in a confirmation mail: it emits
+      # <scheme>://<host>/verify and nothing else, whatever is set. Tried it
+      # both ways on a real signup and read the mail. The gateway answers
+      # /verify at the root for exactly that reason.
+      API_EXTERNAL_URL: ${PUBLIC_API_URL}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${AUTH_DB_PASSWORD}@db:5432/postgres?search_path=auth&sslmode=disable
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_AUD: authenticated
+      # The two settings whose wrong values mailed a working link to a machine
+      # the reader did not own. Here they are variables, not dashboard fields.
+      # Behind a proxy GoTrue refuses a Host header it was not told about, and
+      # says so only in a log line. Railway terminates TLS in front of this.
+      GOTRUE_MAILER_EXTERNAL_HOSTS: ${MAILER_EXTERNAL_HOSTS:-}
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${URI_ALLOW_LIST}
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: ${MAILER_AUTOCONFIRM:-false}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+      GOTRUE_SMS_AUTOCONFIRM: "true"
+      # Our own sender, our own wording. The templates are served by the CRM
+      # itself so that one repository holds both the app and what it says.
+      GOTRUE_SMTP_HOST: ${SMTP_HOST}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT}
+      GOTRUE_SMTP_USER: ${SMTP_USER}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_SENDER}
+      GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: "Bevestig je e-mailadres · Verkoop Studio Sales"
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: "Kies een nieuw wachtwoord · Verkoop Studio Sales"
+      GOTRUE_MAILER_SUBJECTS_MAGIC_LINK: "Je aanmeldlink · Verkoop Studio Sales"
+      GOTRUE_MAILER_SUBJECTS_INVITE: "Je bent uitgenodigd · Verkoop Studio Sales"
+      GOTRUE_MAILER_SUBJECTS_EMAIL_CHANGE: "Bevestig je nieuwe e-mailadres · Verkoop Studio Sales"
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: ${TEMPLATE_BASE_URL}/confirm-signup.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: ${TEMPLATE_BASE_URL}/reset-password.html
+      GOTRUE_MAILER_TEMPLATES_MAGIC_LINK: ${TEMPLATE_BASE_URL}/magic-link.html
+      GOTRUE_MAILER_TEMPLATES_INVITE: ${TEMPLATE_BASE_URL}/invite.html
+      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: ${TEMPLATE_BASE_URL}/email-change.html
+
+  rest:
+    image: public.ecr.aws/supabase/postgrest:v16.5
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_DB_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+
+  storage:
+    image: public.ecr.aws/supabase/storage-api:v1.90.1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${STORAGE_DB_PASSWORD}@db:5432/postgres
+      POSTGREST_URL: http://rest:3000
+      FILE_SIZE_LIMIT: "52428800"
+      # On Railway this becomes s3 against Cloudflare R2: a Railway volume is
+      # one disk on one machine, and signed contracts are not something to keep
+      # in one place. See README · Storage.
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-file}
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: verkoop
+      REGION: local
+      GLOBAL_S3_BUCKET: ${S3_BUCKET:-unused}
+    volumes:
+      - storage-data:/var/lib/storage
+
+  # Local only. Production points the SMTP variables at the real sender; this
+  # is here so that standing the stack up on a laptop does not mean either
+  # mailing a stranger or turning confirmations off and testing a road nobody
+  # travels. Web on :54334, SMTP on :1025 inside the network.
+  mail:
+    image: public.ecr.aws/supabase/mailpit:v1.31.3
+    restart: unless-stopped
+    ports:
+      - "54334:8025"
+
+  kong:
+    image: public.ecr.aws/supabase/kong:2.8.1
+    restart: unless-stopped
+    depends_on: [auth, rest, storage]
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./kong.yml:/home/kong/kong.yml:ro
+    ports:
+      - "${GATEWAY_PORT:-54331}:8000"
+
+volumes:
+  db-data:
+  storage-data:

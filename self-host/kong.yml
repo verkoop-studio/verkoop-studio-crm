@@ -1,0 +1,64 @@
+# The one address supabase-js talks to.
+#
+# supabase-js expects a single origin with /auth/v1, /rest/v1 and /storage/v1
+# hanging off it. That shape is the only reason this gateway exists: the app's
+# own code is unchanged by the move, because the URL it is given looks the same.
+#
+# Deliberately NOT doing api-key checking. Supabase's own gateway config puts a
+# key-auth plugin in front and rejects a request whose `apikey` header is not
+# the anon or the service key. That key is printed in our JavaScript bundle, so
+# it keeps nobody out; what actually holds the line is PostgREST verifying the
+# JWT and falling back to the `anon` database role, and row level security
+# refusing to match anything for that role. Leaving the plugin out keeps this
+# file static — no secrets in it, no templating step at boot, nothing to get
+# wrong on a Sunday. Add it back if a rate limit or an audit asks for it.
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: auth
+    url: http://auth:9999/
+    routes:
+      - name: auth
+        strip_path: true
+        paths:
+          - /auth/v1/
+    plugins:
+      - name: cors
+
+  - name: rest
+    url: http://rest:3000/
+    routes:
+      - name: rest
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: cors
+
+  - name: storage
+    url: http://storage:5000/
+    routes:
+      - name: storage
+        strip_path: true
+        paths:
+          - /storage/v1/
+    plugins:
+      - name: cors
+
+  # GoTrue hands these three out itself — in the link inside a confirmation
+  # mail, and as the address an OAuth provider is told to come back to — and it
+  # writes them at the root, with no /auth/v1 in front, no matter what
+  # API_EXTERNAL_URL says. Without these routes the mail is perfect and the
+  # link is a 404, which is a worse morning than a stack that will not start.
+  - name: auth-root
+    url: http://auth:9999
+    routes:
+      - name: auth-root
+        strip_path: false
+        paths:
+          - /verify
+          - /callback
+          - /authorize
+    plugins:
+      - name: cors

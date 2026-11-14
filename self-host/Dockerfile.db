@@ -1,0 +1,4 @@
+# The Supabase Postgres image, plus the handful of things it does not do for
+# itself. Railway builds this; the SQL runs once, on an empty volume.
+FROM public.ecr.aws/supabase/postgres:17.11.0.018
+COPY init/ /docker-entrypoint-initdb.d/

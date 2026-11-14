@@ -34,10 +34,18 @@ esac
 # before the CRM's schema will apply, and the error you get otherwise —
 # relation "storage.buckets" does not exist, fifteen files in — says nothing
 # about why. Say it here instead.
-if [ "$($PSQL -tAc "select to_regclass('storage.buckets') is not null")" != "true" ]; then
+# ::text, because psql prints a bare boolean as t and f. Concatenating one
+# gives the word instead, which is why the superuser check above compares
+# against "true" and this one has to ask for it.
+if [ "$($PSQL -tAc "select (to_regclass('storage.buckets') is not null)::text")" != "true" ]; then
   echo "storage.buckets does not exist yet." >&2
   echo "The storage service writes that table when it first starts, and one of the" >&2
   echo "migrations needs it. Deploy storage, wait for it to come up, then run this again." >&2
+  echo "" >&2
+  echo "What the database can see right now:" >&2
+  echo "  storage schema: $($PSQL -tAc "select case when exists (select 1 from pg_namespace where nspname='storage') then 'exists' else 'MISSING' end")" >&2
+  echo "  storage tables: $($PSQL -tAc "select coalesce(string_agg(tablename, ', ' order by tablename), '(none)') from pg_tables where schemaname='storage'")" >&2
+  echo "  storage role:   $($PSQL -tAc "select case when exists (select 1 from pg_roles where rolname='supabase_storage_admin') then 'exists' else 'MISSING' end")" >&2
   exit 1
 fi
 

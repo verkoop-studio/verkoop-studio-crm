@@ -90,7 +90,9 @@ composed() {
       echo "PGRST_DB_SCHEMAS=public,storage"
       echo "PGRST_DB_ANON_ROLE=anon"
       echo "PGRST_DB_USE_LEGACY_GUCS=false"
-      echo "PGRST_SERVER_HOST=!4"
+      # * is both stacks. !4 is IPv4 only, which on Railway means the gateway
+      # cannot reach it at all — the private network has no A records.
+      echo "PGRST_SERVER_HOST=*"
       ;;
     storage)
       echo "DATABASE_URL=postgres://supabase_storage_admin:$(val STORAGE_DB_PASSWORD)@db.railway.internal:5432/postgres"
@@ -105,6 +107,11 @@ composed() {
       echo "STORAGE_BACKEND=$(val STORAGE_BACKEND)"
       echo "GLOBAL_S3_BUCKET=$(val S3_BUCKET)"
       echo "FILE_STORAGE_BACKEND_PATH=/var/lib/storage"
+      # Same reason, and the port: left alone this picks up Railway's PORT and
+      # listens on 8080 over IPv4, while the gateway is looking for :5000 on a
+      # v6 address.
+      echo "SERVER_HOST=::"
+      echo "SERVER_PORT=5000"
       ;;
     migrate)
       echo "MIGRATE_DATABASE_URL=postgres://supabase_admin:$(val SUPABASE_ADMIN_DB_PASSWORD)@db.railway.internal:5432/postgres"

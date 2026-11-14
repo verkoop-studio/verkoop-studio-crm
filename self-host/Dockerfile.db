@@ -1,0 +1,24 @@
+# The Supabase Postgres image, plus the handful of things it does not do for
+# itself. Railway builds this; the SQL runs once, on an empty volume.
+#
+# Paths are from the repository root, which is the build context both here and
+# on Railway. Anything else means a service that builds on a laptop and not in
+# production, or needs a root directory set by hand in a web form that nobody
+# remembers setting.
+FROM public.ecr.aws/supabase/postgres:17.11.0.018
+COPY self-host/init/ /docker-entrypoint-initdb.d/
+
+# Nothing is set here about where the data lives, and that is deliberate.
+#
+# This image starts with `postgres -D /etc/postgresql` — a config directory,
+# not a data directory — and the `data_directory` inside that config points at
+# /var/lib/postgresql/data. The PGDATA environment variable steers initdb and
+# nothing else, so setting it moves where the database is created without
+# moving where the server looks for it: initdb succeeds, the server then says
+# "/var/lib/postgresql/data is not a valid data directory", and the deploy
+# reports SUCCESS throughout while the container restarts behind it.
+#
+# So the volume is mounted one level up, at /var/lib/postgresql, and the data
+# directory keeps the name the config already expects. The mount brings its own
+# lost+found, which sits beside the data directory rather than inside it, and
+# initdb gets the empty directory it insists on.

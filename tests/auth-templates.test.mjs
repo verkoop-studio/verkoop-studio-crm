@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { TEMPLATES, TEMPLATE_DIR, render } from "../scripts/build-auth-templates.mjs";
+import { TEMPLATES, TEMPLATE_DIR, PUBLIC_DIR, render } from "../scripts/build-auth-templates.mjs";
 
 const config = readFileSync(join(TEMPLATE_DIR, "..", "config.toml"), "utf8");
 const committed = Object.fromEntries(
@@ -18,6 +18,16 @@ test("the committed HTML is what the generator produces", () => {
       committed[key],
       render(template),
       `supabase/templates/${template.file} is stale. Run \`npm run mail:build\` and commit it.`,
+    );
+  }
+});
+
+test("the same files are served over HTTP for a self-hosted GoTrue", () => {
+  for (const [key, template] of Object.entries(TEMPLATES)) {
+    assert.equal(
+      readFileSync(join(PUBLIC_DIR, template.file), "utf8"),
+      committed[key],
+      `public/auth-mail/${template.file} differs from supabase/templates/. Run \`npm run mail:build\`.`,
     );
   }
 });

@@ -20,6 +20,16 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 export const TEMPLATE_DIR = join(here, "..", "supabase", "templates");
 
+/*
+ * The same files, served over HTTP.
+ *
+ * A self-hosted GoTrue is told where its templates are with a URL, not a
+ * pasted blob, and it fetches them when it sends. Serving them from the app's
+ * own public directory means one repository holds both the product and the
+ * words it says, and a change to either ships the same way.
+ */
+export const PUBLIC_DIR = join(here, "..", "public", "auth-mail");
+
 const COMPANY = "Verkoop Studio";
 const PRODUCT = "Verkoop Studio Sales";
 
@@ -292,9 +302,12 @@ export function subject(template) {
 
 export function build() {
   mkdirSync(TEMPLATE_DIR, { recursive: true });
+  mkdirSync(PUBLIC_DIR, { recursive: true });
   const written = [];
   for (const template of Object.values(TEMPLATES)) {
-    writeFileSync(join(TEMPLATE_DIR, template.file), render(template));
+    const html = render(template);
+    writeFileSync(join(TEMPLATE_DIR, template.file), html);
+    writeFileSync(join(PUBLIC_DIR, template.file), html);
     written.push(template.file);
   }
   return written;

@@ -1,0 +1,48 @@
+# The one address supabase-js talks to.
+#
+# This replaced Kong. Kong's bundled resolver in 2.8 has no AAAA in its
+# dns_order, and Railway's private network publishes nothing else, so every
+# upstream looked down and every request came back 502 with nothing in the log
+# to say why. The gateway's whole job here is to put three services on one
+# origin; that is fifteen lines of anything, and the thing that does it should
+# be the thing that can find them.
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static 0.0.0.0/0 ::/0
+	}
+}
+
+# Railway injects PORT and routes the public domain to it; a gateway listening
+# on a port of its own choosing is a 502 with nothing in any log. The default
+# keeps the compose file working, where there is no PORT.
+:{$PORT:8000} {
+	# handle_path strips the prefix, which is what the services expect: GoTrue
+	# serves /settings, not /auth/v1/settings.
+	handle_path /auth/v1/* {
+		reverse_proxy auth.railway.internal:9999
+	}
+	handle_path /rest/v1/* {
+		reverse_proxy rest.railway.internal:3000
+	}
+	handle_path /storage/v1/* {
+		reverse_proxy storage.railway.internal:5000
+	}
+
+	# GoTrue writes these three at the root — in the link inside a confirmation
+	# mail, and as the address an OAuth provider is told to come back to — no
+	# matter what API_EXTERNAL_URL says. Without them the mail is perfect and
+	# the link in it is a 404.
+	handle /verify* {
+		reverse_proxy auth.railway.internal:9999
+	}
+	handle /callback* {
+		reverse_proxy auth.railway.internal:9999
+	}
+	handle /authorize* {
+		reverse_proxy auth.railway.internal:9999
+	}
+
+	respond "verkoop studio sales" 200
+}

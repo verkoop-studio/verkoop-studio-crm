@@ -1,0 +1,5 @@
+# The gateway, with its routing baked in. Railway cannot mount a single file,
+# and the routing is not a secret, so the thing that runs is the thing in the
+# repository.
+FROM caddy:2.9-alpine
+COPY self-host/Caddyfile /etc/caddy/Caddyfile

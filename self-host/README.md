@@ -82,9 +82,40 @@ STORAGE_BACKEND=s3
 
 Supabase did this; Railway does not. A volume is one disk in one place, and what is on it is the pipeline.
 
-Nothing here sets that up yet. Before this takes real traffic, there must be a `pg_dump` on a schedule, written somewhere that is not Railway — Cloudflare R2 is already in the picture for storage — and a restore that has actually been run once. A backup nobody has restored is a belief, not a backup.
+`self-host/backup/` is a service of its own, run on a schedule:
 
-The same goes for `STORAGE_BACKEND`. `file` puts the signed contracts on the same disk; `s3` against R2 puts them somewhere that survives the service being deleted. Use `s3`.
+```bash
+docker compose -f self-host/docker-compose.yml --env-file self-host/.env --profile tools run --rm backup
+```
+
+It takes a `pg_dump -Fc` of the whole database, uploads it to S3, **reads it back and compares the checksum**, then sweeps up anything older than `BACKUP_KEEP_DAYS` — never the last one, whatever a clock says.
+
+On Railway it is a service built from `self-host/backup/`, with a cron schedule and the `BACKUP_*` variables. Daily is the floor.
+
+### It backs up as `supabase_admin`, and that is not a detail
+
+`postgres` is **not** the superuser in the Supabase image — one of the image's own migrations demotes it, and `supabase_admin` holds the keys. A `pg_restore` run as `postgres` is refused on the `auth` schema, does not stop, works happily through `public`, and leaves a database with every lead in it and **not one account**. It looks exactly like a restore that worked.
+
+That is how the first drill here went. Both scripts now refuse to start unless the connection is a superuser, and the restore exits non-zero if `auth.users` comes back empty.
+
+### Where it writes
+
+Cloudflare R2, in production. Not Railway, and not the storage service in this stack: a backup that lives on the same infrastructure as the database is a copy, not a backup.
+
+Turn on R2 object versioning for that bucket, and for the bucket holding `lead-documents`. The database dump is what this job takes; the stored files are kept by R2 itself, which is a setting rather than a script. With `STORAGE_BACKEND=file` the files sit on a Railway volume and **nothing here protects them** — which is why production uses `s3` and means it.
+
+### The drill
+
+```bash
+node self-host/backup/restore.mjs --list
+RESTORE_DATABASE_URL=<an empty database> node self-host/backup/restore.mjs
+```
+
+It refuses a target that already has tables unless `RESTORE_OVERWRITE=yes`, checks the downloaded checksum, and prints what came back. Run it somewhere disposable every so often. A backup nobody has restored is a belief.
+
+Run here, into an empty database of the same image: 22 accounts, 9 companies, 203 leads, 7 activities, 11 roles — and **20 row policies with row security on all 10 tables**, which is the part that matters most, since a restore that loses those gives every customer everybody's leads.
+
+Unlike the API export, a dump carries the password hashes. A restore from one of these needs no reset from anybody.
 
 ## Moving the data
 

@@ -33,6 +33,7 @@ services:
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
       STORAGE_DB_PASSWORD: ${STORAGE_DB_PASSWORD}
       AUTHENTICATOR_DB_PASSWORD: ${AUTHENTICATOR_DB_PASSWORD}
+      SUPABASE_ADMIN_DB_PASSWORD: ${SUPABASE_ADMIN_DB_PASSWORD}
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
@@ -128,6 +129,15 @@ services:
       # in one place. See README · Storage.
       STORAGE_BACKEND: ${STORAGE_BACKEND:-file}
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      # storage-api speaks the S3 protocol as well, on /storage/v1/s3. That is
+      # what gives the backup job a real S3 to be tested against on a laptop,
+      # with no second image to pull. Production backs up to Cloudflare R2
+      # instead, and must: a backup on the same stack as the database is a copy,
+      # not a backup.
+      S3_PROTOCOL_ENABLED: ${S3_PROTOCOL_ENABLED:-false}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-local}
+      S3_PROTOCOL_ACCESS_KEY_ID: ${S3_PROTOCOL_ACCESS_KEY_ID:-}
+      S3_PROTOCOL_ACCESS_KEY_SECRET: ${S3_PROTOCOL_ACCESS_KEY_SECRET:-}
       TENANT_ID: verkoop
       REGION: local
       GLOBAL_S3_BUCKET: ${S3_BUCKET:-unused}
@@ -143,6 +153,27 @@ services:
     restart: unless-stopped
     ports:
       - "54334:8025"
+
+  # Not started with the others: on Railway this is a service with a schedule,
+  # and here it is something to run by hand.
+  #   docker compose -f self-host/docker-compose.yml --env-file self-host/.env \
+  #     run --rm backup
+  backup:
+    build:
+      context: ./backup
+    profiles: [tools]
+    environment:
+      # supabase_admin, not postgres: see init/zz-self-host.sql.
+      BACKUP_DATABASE_URL: postgres://supabase_admin:${SUPABASE_ADMIN_DB_PASSWORD}@db:5432/postgres
+      RESTORE_DATABASE_URL: ${RESTORE_DATABASE_URL:-}
+      RESTORE_OVERWRITE: ${RESTORE_OVERWRITE:-}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-auto}
+      BACKUP_PREFIX: ${BACKUP_PREFIX:-sales-crm/postgres/}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
 
   kong:
     image: public.ecr.aws/supabase/kong:2.8.1

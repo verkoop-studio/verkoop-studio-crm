@@ -20,11 +20,20 @@
 \set auth_pw `echo "$AUTH_DB_PASSWORD"`
 \set storage_pw `echo "$STORAGE_DB_PASSWORD"`
 \set authenticator_pw `echo "$AUTHENTICATOR_DB_PASSWORD"`
+\set admin_pw `echo "$SUPABASE_ADMIN_DB_PASSWORD"`
 \set jwt_secret `echo "$JWT_SECRET"`
 
 ALTER ROLE supabase_auth_admin    WITH PASSWORD :'auth_pw';
 ALTER ROLE supabase_storage_admin WITH PASSWORD :'storage_pw';
 ALTER ROLE authenticator          WITH PASSWORD :'authenticator_pw';
+
+-- `postgres` is not the superuser in this image; it is demoted by one of the
+-- image's own migrations, and `supabase_admin` holds the keys. That matters in
+-- exactly one place and it is the worst place: a pg_restore run as `postgres`
+-- is refused on the `auth` schema, carries on through `public` without
+-- stopping, and leaves a database full of leads and no accounts. Backups and
+-- restores connect as supabase_admin, so it needs a password.
+ALTER ROLE supabase_admin           WITH PASSWORD :'admin_pw';
 
 -- 2. The trap.
 --

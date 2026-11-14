@@ -48,4 +48,5 @@ SERVICE_ROLE_KEY=${sign(claims("service_role"), jwtSecret)}
 POSTGRES_PASSWORD=${password()}
 AUTH_DB_PASSWORD=${password()}
 STORAGE_DB_PASSWORD=${password()}
-AUTHENTICATOR_DB_PASSWORD=${password()}`);
+AUTHENTICATOR_DB_PASSWORD=${password()}
+SUPABASE_ADMIN_DB_PASSWORD=${password()}`);

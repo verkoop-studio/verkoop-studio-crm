@@ -101,7 +101,7 @@ composed() {
       echo "AUTH_JWT_SECRET=$(val JWT_SECRET)"
       echo "FILE_SIZE_LIMIT=52428800"
       echo "TENANT_ID=verkoop"
-      echo "REGION=$(val BACKUP_S3_REGION)"
+      echo "REGION=$(val STORAGE_REGION)"
       echo "STORAGE_BACKEND=$(val STORAGE_BACKEND)"
       echo "GLOBAL_S3_BUCKET=$(val S3_BUCKET)"
       echo "FILE_STORAGE_BACKEND_PATH=/var/lib/storage"

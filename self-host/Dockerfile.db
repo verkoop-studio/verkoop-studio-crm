@@ -8,14 +8,17 @@
 FROM public.ecr.aws/supabase/postgres:17.11.0.018
 COPY self-host/init/ /docker-entrypoint-initdb.d/
 
-# Put the data one level inside the mount.
+# Nothing is set here about where the data lives, and that is deliberate.
 #
-# A Railway volume arrives formatted, which means it already contains
-# lost+found, which means it is not empty, which means initdb refuses to touch
-# it: "directory exists but is not empty", on a loop, forever. The deploy
-# reports success while the container restarts behind it.
+# This image starts with `postgres -D /etc/postgresql` — a config directory,
+# not a data directory — and the `data_directory` inside that config points at
+# /var/lib/postgresql/data. The PGDATA environment variable steers initdb and
+# nothing else, so setting it moves where the database is created without
+# moving where the server looks for it: initdb succeeds, the server then says
+# "/var/lib/postgresql/data is not a valid data directory", and the deploy
+# reports SUCCESS throughout while the container restarts behind it.
 #
-# PGDATA one level down gives initdb the empty directory it insists on. It is
-# set here rather than as a service variable because a variable is a thing
-# somebody can forget when they stand the next one up.
-ENV PGDATA=/var/lib/postgresql/data/pgdata
+# So the volume is mounted one level up, at /var/lib/postgresql, and the data
+# directory keeps the name the config already expects. The mount brings its own
+# lost+found, which sits beside the data directory rather than inside it, and
+# initdb gets the empty directory it insists on.

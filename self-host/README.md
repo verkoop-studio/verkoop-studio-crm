@@ -36,7 +36,7 @@ One project, five services, in this order. Each service's private hostname is it
 
 1. **`db`** — deploy from this repository, Dockerfile `self-host/Dockerfile.db`, root directory `self-host`. Attach a volume at `/var/lib/postgresql/data`. Set `POSTGRES_PASSWORD`, `JWT_SECRET`, `AUTH_DB_PASSWORD`, `STORAGE_DB_PASSWORD`, `AUTHENTICATOR_DB_PASSWORD`. **The init SQL runs once, on an empty volume.** Get these right before the first boot or start the volume again.
 2. **`rest`, `auth`, `storage`** — deploy from their images, with the variables from `docker-compose.yml`.
-3. **`kong`** — from its image, with `kong.yml` mounted or baked in, and a public domain. That domain is what the app gets as `VITE_SUPABASE_URL`.
+3. **the gateway** — built from `self-host/Dockerfile.gateway`, with a public domain. That domain is what the app gets as `VITE_SUPABASE_URL`. It listens on `{$PORT}`, because Railway injects one and routes the domain to it.
 
 Then apply the schema, from a machine with `psql` and the public database URL:
 
@@ -76,7 +76,9 @@ STORAGE_BACKEND=s3
 
 **`auth.uid()` must be replaced.** The image ships the version that reads `request.jwt.claim.sub`, one GUC per claim, the way PostgREST set them before version 9. PostgREST 16 sets a single `request.jwt.claims` JSON and nothing else, so the shipped function returns NULL for every request — and every row policy here is built on it. They do not error, they match nothing. The app comes up, signs people in, and shows them an empty CRM. `init/zz-self-host.sql` replaces all three helpers with the bodies a working stack runs.
 
-**The link in the mail has no `/auth/v1` in it.** This tag of GoTrue throws away any path on `API_EXTERNAL_URL` and writes `<scheme>://<host>/verify`. Tried both ways and read the mail. `kong.yml` answers `/verify`, `/callback` and `/authorize` at the root for that reason. Remove those routes and every confirmation mail is perfect and every link in one is a 404.
+**Kong could not resolve anything.** Its bundled resolver in 2.8 has no AAAA in `dns_order` and Railway's private network publishes nothing else, so every upstream looked down and every request came back 502 with nothing in any log to say why. Caddy does the same three routes in fifteen lines and finds them.
+
+**The link in the mail has no `/auth/v1` in it.** This tag of GoTrue throws away any path on `API_EXTERNAL_URL` and writes `<scheme>://<host>/verify`. Tried both ways and read the mail. The Caddyfile answers `/verify`, `/callback` and `/authorize` at the root for that reason. Remove those routes and every confirmation mail is perfect and every link in one is a 404.
 
 ## Backups
 

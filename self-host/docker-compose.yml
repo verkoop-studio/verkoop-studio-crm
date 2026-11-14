@@ -193,12 +193,13 @@ services:
       BACKUP_PREFIX: ${BACKUP_PREFIX:-sales-crm/postgres/}
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
 
+  # Named kong for now because the Railway service is: it runs Caddy.
   kong:
-    # Built, not mounted: Railway cannot mount a single file, so the config
+    # Built, not mounted: Railway cannot mount a single file, so the routing
     # lives in the image and the same image runs in both places.
     build:
       context: ..
-      dockerfile: self-host/Dockerfile.kong
+      dockerfile: self-host/Dockerfile.gateway
     restart: unless-stopped
     depends_on: [auth, rest, storage]
     ports:

@@ -66,6 +66,8 @@ TEMPLATE_BASE_URL=https://crm.verkoop.studio/auth-mail
 STORAGE_BACKEND=s3
 ```
 
+A secret that someone has to paste — the Resend key, the R2 keys — goes in with `./self-host/set-secret.sh SMTP_PASS`, which prompts for it, shows enough of what it read to catch a bad paste, replaces rather than appends, and sends it over stdin.
+
 `SITE_URL` and `URI_ALLOW_LIST` are the two settings that mailed out a working link to a machine the reader did not own. Here they are variables in a file we control, reviewed like anything else, instead of fields in a dashboard nobody can open.
 
 `TEMPLATE_BASE_URL` must serve the five files from `supabase/templates/` over HTTP. Serving them from the CRM's own `public/auth-mail/` keeps the app and what it says in one repository.

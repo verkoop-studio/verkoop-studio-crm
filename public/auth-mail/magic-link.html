@@ -1,0 +1,46 @@
+{{ $lang := "nl" }}{{ if eq (printf "%v" (index .Data "language")) "en" }}{{ $lang = "en" }}{{ end }}<!doctype html>
+<html lang="{{ if eq $lang "en" }}en{{ else }}nl{{ end }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Verkoop Studio Sales</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5fb;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">{{ if eq $lang "en" }}Sign in without a password.{{ else }}Meld je aan zonder wachtwoord.{{ end }}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f5fb">
+<tr><td align="center" style="padding:32px 16px">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
+
+<!-- Wordmark. Text, not an image: a blocked image would leave the e-mail
+     unsigned, and the mark is a word with a coloured dot in any case. -->
+<tr><td style="padding:0 4px 18px">
+<span style="font-size:19px;font-weight:700;letter-spacing:-0.045em;color:#10131c">verkoop<span style="color:#254bfa">.</span>studio</span>
+<span style="display:inline-block;margin-left:9px;padding:4px 9px;border:1px solid #e2e8fc;border-radius:30px;background:#eaf0ff;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2344ca">Sales</span>
+</td></tr>
+
+<tr><td style="background:#ffffff;border:1px solid #e1e4ef;border-radius:20px;padding:36px 32px">
+<h1 style="margin:0;font-size:25px;line-height:1.25;letter-spacing:-0.035em;font-weight:700;color:#10131c">{{ if eq $lang "en" }}Your sign-in link{{ else }}Je aanmeldlink{{ end }}</h1>
+<p style="margin:18px 0 0;font-size:15px;line-height:1.65;color:#505465">{{ if eq $lang "en" }}The button below signs you in to Verkoop Studio Sales. You do not need a password for it.{{ else }}Met de knop hieronder meld je je aan bij Verkoop Studio Sales. Je hebt er geen wachtwoord voor nodig.{{ end }}</p>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 0"><tr><td style="border-radius:8px;background:#254bfa">
+<a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 26px;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:8px">{{ if eq $lang "en" }}Sign in{{ else }}Aanmelden{{ end }}</a>
+</td></tr></table>
+
+<p style="margin:26px 0 0;font-size:13px;line-height:1.65;color:#676d7e">{{ if eq $lang "en" }}Button not working? Paste this link into your browser:{{ else }}Werkt de knop niet? Plak deze link in je browser:{{ end }}</p>
+<p style="margin:6px 0 0;font-size:13px;line-height:1.5;word-break:break-all"><a href="{{ .ConfirmationURL }}" style="color:#254bfa;text-decoration:underline">{{ .ConfirmationURL }}</a></p>
+
+<div style="height:1px;background:#ebedfc;margin:26px 0 0"></div>
+<p style="margin:18px 0 0;font-size:13px;line-height:1.65;color:#676d7e">{{ if eq $lang "en" }}This link works once and expires after a while. Did you not ask to sign in? Ignore this email and share it with no one.{{ else }}Deze link werkt één keer en verloopt na verloop van tijd. Vroeg je geen aanmeldlink aan? Negeer deze e-mail en deel hem met niemand.{{ end }}</p>
+</td></tr>
+
+<tr><td style="padding:18px 4px 0;font-size:12px;line-height:1.6;color:#696f81">
+{{ if eq $lang "en" }}You are receiving this email because a sign-in link was requested for this address.{{ else }}Je ontvangt deze e-mail omdat er een aanmeldlink is aangevraagd voor dit adres.{{ end }}<br>
+Verkoop Studio · <a href="https://verkoop.studio" style="color:#696f81;text-decoration:underline">verkoop.studio</a>
+</td></tr>
+
+</table>
+</td></tr></table>
+</body>
+</html>

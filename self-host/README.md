@@ -57,7 +57,7 @@ URI_ALLOW_LIST=https://crm.verkoop.studio/**
 MAILER_EXTERNAL_HOSTS=<the kong domain>
 MAILER_AUTOCONFIRM=false
 SMTP_HOST=smtp.resend.com
-SMTP_PORT=465
+SMTP_PORT=2587
 SMTP_USER=resend
 SMTP_PASS=<a Resend API key>
 SMTP_SENDER=account@send.verkoop.studio
@@ -70,7 +70,7 @@ A secret that someone has to paste — the Resend key, the R2 keys — goes in w
 
 `SITE_URL` and `URI_ALLOW_LIST` are the two settings that mailed out a working link to a machine the reader did not own. Here they are variables in a file we control, reviewed like anything else, instead of fields in a dashboard nobody can open.
 
-`TEMPLATE_BASE_URL` must serve the five files from `supabase/templates/` over HTTP. Serving them from the CRM's own `public/auth-mail/` keeps the app and what it says in one repository.
+`TEMPLATE_BASE_URL` points at the gateway, which serves the five files itself. They were going to come from the CRM's `public/auth-mail/`, which made every authentication mail depend on the app being deployed — a sign-up that returns 504 with `status code 404` in a log line is not a good way to learn that.
 
 ## Three things that will bite
 

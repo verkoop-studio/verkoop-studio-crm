@@ -44,5 +44,16 @@
 		reverse_proxy auth.railway.internal:9999
 	}
 
+	# The five authentication mail templates, served by the stack that sends
+	# them. GoTrue fetches a template by URL when it sends, and pointing it at
+	# the CRM made the mail depend on the app being deployed and on a path in
+	# its public directory — which is how a sign-up came back 504 with
+	# "status code 404" buried in a log. They are built into this image
+	# instead, beside the service that reads them.
+	handle /auth-mail/* {
+		root * /srv
+		file_server
+	}
+
 	respond "verkoop studio sales" 200
 }
